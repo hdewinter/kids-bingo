@@ -61,19 +61,28 @@
         <button class="btn ghost small" id="checkBtn">Kaart checken</button>
       </div>
     </div>
-    <div class="draw-stage">
-      <div class="tile-frame" id="tileFrame">
-        <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
-        <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
-        <div class="tile-label" id="tileLabel"></div>
+    <div class="game-body">
+      <div class="left-panel">
+        <div class="tile-frame" id="tileFrame">
+          <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
+          <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
+          <div class="tile-label" id="tileLabel"></div>
+        </div>
+        <div class="progress-line" id="statusLine">Klaar om te trekken</div>
+        <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
+        <div class="trail" id="trail"></div>
+        <div class="action-row">
+          <button class="btn coral" id="drawBtn">Trek een plaatje</button>
+          <button class="btn sky" id="autoBtn">Auto starten</button>
+          <button class="btn ghost" id="resetBtn">Opnieuw beginnen</button>
+        </div>
       </div>
-      <div class="progress-line" id="statusLine">Klaar om te trekken</div>
-      <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
-      <div class="trail" id="trail"></div>
-      <div class="action-row">
-        <button class="btn coral" id="drawBtn">Trek een plaatje</button>
-        <button class="btn sky" id="autoBtn">Auto starten</button>
-        <button class="btn ghost" id="resetBtn">Opnieuw beginnen</button>
+      <div class="right-panel">
+        <div class="right-header">
+          <h2>Overzicht</h2>
+          <div class="count" id="overviewCount">0 / 0</div>
+        </div>
+        <div class="grid-wrap"><div id="itemGrid"></div></div>
       </div>
     </div>
   </div>
@@ -135,6 +144,8 @@
   const statusLine = document.getElementById('statusLine');
   const progressFill = document.getElementById('progressFill');
   const trail = document.getElementById('trail');
+  const itemGrid = document.getElementById('itemGrid');
+  const overviewCount = document.getElementById('overviewCount');
   const drawBtn = document.getElementById('drawBtn');
   const autoBtn = document.getElementById('autoBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -255,7 +266,55 @@
     const theme = KIDS_THEMES[themeId];
     pool = shuffleWith(theme.items.map(it => it.id), mulberry32(randomSeed()));
     poolIndex = 0; called = new Set();
+    buildItemGrid(theme);
   }
+
+  function buildItemGrid(theme){
+    itemGrid.innerHTML = '';
+    theme.items.forEach(item => {
+      const cell = document.createElement('div');
+      cell.className = 'icell';
+      cell.id = 'icell-' + item.id;
+      cell.textContent = item.emoji;
+      cell.title = item.label;
+      itemGrid.appendChild(cell);
+    });
+    overviewCount.textContent = called.size + ' / ' + theme.items.length;
+    layoutItemGrid();
+  }
+
+  function layoutItemGrid(){
+    const wrap = itemGrid.parentElement;
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight;
+    if(width < 10 || height < 10) return;
+
+    const count = itemGrid.children.length;
+    if(count === 0) return;
+    const gap = Math.max(3, Math.min(9, Math.round(Math.min(width, height) / 60)));
+
+    let best = { cols: 1, rows: count, size: 0 };
+    for(let cols = 1; cols <= count; cols++){
+      const rows = Math.ceil(count / cols);
+      const cellW = (width - gap * (cols - 1)) / cols;
+      const cellH = (height - gap * (rows - 1)) / rows;
+      const size = Math.min(cellW, cellH);
+      if(size > best.size){ best = { cols, rows, size }; }
+    }
+    const s = Math.max(20, Math.floor(best.size));
+    itemGrid.style.gap = gap + 'px';
+    itemGrid.style.gridTemplateColumns = `repeat(${best.cols}, ${s}px)`;
+    itemGrid.style.gridTemplateRows = `repeat(${best.rows}, ${s}px)`;
+    itemGrid.style.fontSize = Math.max(12, s * 0.5) + 'px';
+  }
+
+  let layoutRAF = null;
+  function scheduleItemGridLayout(){
+    if(layoutRAF) cancelAnimationFrame(layoutRAF);
+    layoutRAF = requestAnimationFrame(layoutItemGrid);
+  }
+  window.addEventListener('resize', scheduleItemGridLayout);
+  window.addEventListener('orientationchange', scheduleItemGridLayout);
 
   function updateTrail(){
     trail.innerHTML = '';
@@ -287,11 +346,16 @@
     tileLabel.textContent = item.label;
     tileFrame.classList.remove('pop'); void tileFrame.offsetWidth; tileFrame.classList.add('pop');
 
+    document.querySelectorAll('.icell.current').forEach(c => c.classList.remove('current'));
+    const cell = document.getElementById('icell-' + id);
+    if(cell){ cell.classList.remove('current'); void cell.offsetWidth; cell.classList.add('called'); cell.classList.add('current'); }
+
     playAnnounce(item);
     updateTrail();
     const pct = Math.round((called.size/theme.items.length)*100);
     progressFill.style.width = pct + '%';
     statusLine.textContent = called.size + ' van ' + theme.items.length + ' getrokken';
+    overviewCount.textContent = called.size + ' / ' + theme.items.length;
 
     if(called.size >= theme.items.length){
       statusLine.textContent = 'Alle plaatjes zijn getrokken!';
@@ -327,6 +391,7 @@
   confirmNo.onclick = () => { resetOverlay.classList.remove('active'); };
   resetOverlay.addEventListener('click', e => { if(e.target === resetOverlay) resetOverlay.classList.remove('active'); });
 
+
   backBtn.onclick = () => {
     stopAuto();
     gameScreen.style.display = 'none';
@@ -350,6 +415,7 @@
     trail.innerHTML = '';
     settingsScreen.style.display = 'none';
     gameScreen.style.display = 'block';
+    scheduleItemGridLayout();
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
       try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
     }
