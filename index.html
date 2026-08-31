@@ -15,6 +15,11 @@
   <div class="splash-emoji">🎉</div>
   <div class="splash-text">Kids Bingo wordt geladen…</div>
 </div>
+<div id="rotateHint">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#3A2E52" stroke-width="1.6"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+  <div class="rh-title">Draai je toestel naar landschap</div>
+  <div class="rh-sub">De trekker heeft een breed scherm nodig (telefoon liggend, tablet of laptop/pc). De instellingen mag je gewoon rechtop gebruiken.</div>
+</div>
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
@@ -37,8 +42,9 @@
       <div class="field">
         <label>Snelheid bij automatisch trekken</label>
         <div class="speed-row">
-          <span class="speed-icon" id="speedIcon">🐢</span>
+          <span class="speed-icon" title="Snel">🐇</span>
           <input type="range" id="intInput" value="6" min="2" max="15" step="1">
+          <span class="speed-icon" title="Langzaam">🐢</span>
           <span class="speed-value" id="speedValue">6 sec</span>
         </div>
         <div class="hint">Schuif naar het konijn voor snel trekken (&lt;4 sec), naar de schildpad voor langzaam (&gt;4 sec).</div>
@@ -63,10 +69,15 @@
     </div>
     <div class="game-body">
       <div class="left-panel">
-        <div class="tile-frame" id="tileFrame">
-          <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
-          <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
-          <div class="tile-label" id="tileLabel"></div>
+        <div class="cage">
+          <svg class="ring-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect id="ringProgress" x="3" y="3" width="94" height="94" rx="13"></rect>
+          </svg>
+          <div class="tile-frame" id="tileFrame">
+            <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
+            <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
+            <div class="tile-label" id="tileLabel"></div>
+          </div>
         </div>
         <div class="progress-line" id="statusLine">Klaar om te trekken</div>
         <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
@@ -209,17 +220,9 @@
   buildThemeGrid();
   buildSoundRow();
 
-  const speedIcon = document.getElementById('speedIcon');
   const speedValue = document.getElementById('speedValue');
   function updateSpeedDisplay(){
-    const v = parseInt(intInput.value,10);
-    speedValue.textContent = v + ' sec';
-    const wasSlow = speedIcon.textContent === '🐢';
-    const nowSlow = v > 4;
-    speedIcon.textContent = nowSlow ? '🐢' : '🐇';
-    if(wasSlow !== nowSlow){
-      speedIcon.classList.remove('pop'); void speedIcon.offsetWidth; speedIcon.classList.add('pop');
-    }
+    speedValue.textContent = parseInt(intInput.value,10) + ' sec';
   }
   intInput.addEventListener('input', updateSpeedDisplay);
   updateSpeedDisplay();
@@ -329,6 +332,43 @@
     });
   }
 
+  const ringProgress = document.getElementById('ringProgress');
+  let RING_C = 0;
+  try{ RING_C = ringProgress.getTotalLength(); ringProgress.style.strokeDasharray = RING_C; }catch(e){ RING_C = 0; }
+  let cdRAF = null, cdStartTs = 0;
+
+  function lerpColor(p){
+    const from = [76,175,125]; // groen (--leaf)
+    const to = [225,74,59];    // rood (--coral-dark)
+    const r = Math.round(from[0] + (to[0]-from[0]) * p);
+    const g = Math.round(from[1] + (to[1]-from[1]) * p);
+    const b = Math.round(from[2] + (to[2]-from[2]) * p);
+    return `rgb(${r},${g},${b})`;
+  }
+  function setRingIdle(){
+    if(cdRAF){ cancelAnimationFrame(cdRAF); cdRAF = null; }
+    ringProgress.style.opacity = '0';
+  }
+  function cdTick(now){
+    if(!autoTimer){ setRingIdle(); return; }
+    const elapsed = now - cdStartTs;
+    const progress = Math.min(elapsed / (intervalSec*1000), 1);
+    ringProgress.style.strokeDashoffset = (progress * RING_C).toFixed(2);
+    ringProgress.style.stroke = lerpColor(progress);
+    if(progress < 1){ cdRAF = requestAnimationFrame(cdTick); }
+  }
+  function startCountdownCycle(){
+    if(!RING_C){
+      try{ RING_C = ringProgress.getTotalLength(); ringProgress.style.strokeDasharray = RING_C; }catch(e){}
+    }
+    if(cdRAF) cancelAnimationFrame(cdRAF);
+    ringProgress.style.opacity = '1';
+    ringProgress.style.strokeDashoffset = '0';
+    ringProgress.style.stroke = lerpColor(0);
+    cdStartTs = performance.now();
+    cdRAF = requestAnimationFrame(cdTick);
+  }
+
   function drawItem(){
     const theme = KIDS_THEMES[currentThemeId];
     if(poolIndex >= pool.length){
@@ -360,6 +400,8 @@
     if(called.size >= theme.items.length){
       statusLine.textContent = 'Alle plaatjes zijn getrokken!';
       stopAuto();
+    } else if(autoTimer){
+      startCountdownCycle();
     }
   }
 
@@ -367,10 +409,12 @@
     if(autoTimer) return;
     autoBtn.textContent = 'Auto pauzeren';
     autoTimer = setInterval(drawItem, intervalSec*1000);
+    startCountdownCycle();
   }
   function stopAuto(){
     if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
     autoBtn.textContent = 'Auto starten';
+    setRingIdle();
   }
 
   drawBtn.onclick = () => { if(autoTimer) stopAuto(); drawItem(); };
@@ -378,6 +422,7 @@
 
   function performReset(){
     stopAuto();
+    setRingIdle();
     buildPool(currentThemeId);
     tilePlaceholder.style.display = 'block';
     tileEmoji.style.display = 'none';
@@ -394,6 +439,8 @@
 
   backBtn.onclick = () => {
     stopAuto();
+    setRingIdle();
+    document.body.classList.remove('game-active');
     gameScreen.style.display = 'none';
     settingsScreen.style.display = 'block';
     buildThemeGrid(); buildSoundRow();
@@ -415,6 +462,7 @@
     trail.innerHTML = '';
     settingsScreen.style.display = 'none';
     gameScreen.style.display = 'block';
+    document.body.classList.add('game-active');
     scheduleItemGridLayout();
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
       try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
