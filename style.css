@@ -148,29 +148,32 @@ input[type=number]{ text-align:center; }
 
 /* ---------- Trekker ---------- */
 .game-body{
-  display:flex; gap:22px; flex-wrap:wrap; align-items:stretch;
+  display:flex; gap: clamp(10px, 2vh, 22px); flex-wrap:wrap; align-items:stretch;
 }
 .left-panel{
-  flex: 1 1 320px;
-  display:flex; flex-direction:column; align-items:center; gap:18px;
-  padding: 24px 16px;
+  flex: 1 1 300px;
+  display:flex; flex-direction:column; align-items:center; gap: clamp(6px, 1.6vh, 16px);
+  padding: clamp(10px, 2.2vh, 24px) clamp(10px, 2vw, 16px);
   background: var(--paper); border:2px solid var(--line); border-radius:22px;
   box-shadow: var(--card-shadow);
 }
 .right-panel{
-  flex: 1.15 1 340px;
+  flex: 1.15 1 300px;
   display:flex; flex-direction:column;
-  padding: 18px 18px 22px;
+  padding: clamp(10px, 2vh, 18px) clamp(10px, 2vw, 18px) clamp(12px, 2.2vh, 22px);
   background: var(--paper); border:2px solid var(--line); border-radius:22px;
   box-shadow: var(--card-shadow);
-  min-height: 340px;
+  min-height: 140px;
 }
 .right-header{
-  display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px;
+  display:flex; align-items:baseline; justify-content:space-between; margin-bottom: clamp(4px, 1vh, 12px);
+  gap:10px; flex-wrap:wrap;
 }
-.right-header h2{ font-size:16px; letter-spacing:0.02em; color:var(--plum); }
-.right-header .count{ font-weight:700; color:var(--plum-soft); font-size:14px; }
-.grid-wrap{ flex:1; overflow:hidden; display:flex; }
+.right-header h2{ font-size: clamp(13px, 2vh, 16px); letter-spacing:0.02em; color:var(--plum); }
+.right-header .count{ font-weight:700; color:var(--plum-soft); font-size: clamp(12px, 1.8vh, 14px); }
+.overview-progress{ width:100%; height: clamp(6px, 1.1vh, 10px); border-radius:999px; background:var(--line); overflow:hidden; margin-bottom: clamp(6px, 1.2vh, 12px); }
+.overview-progress > div{ height:100%; background: var(--sky); border-radius:999px; transition: width 0.3s ease; }
+.grid-wrap{ flex:1; overflow:hidden; display:flex; min-height:0; }
 #itemGrid{ display:grid; margin:auto; justify-content:center; align-content:center; }
 .icell{
   display:flex; align-items:center; justify-content:center;
@@ -190,7 +193,7 @@ input[type=number]{ text-align:center; }
 
 .cage{
   position:relative;
-  width: min(64vw, 300px); aspect-ratio:1/1;
+  width: min(50vw, 38vh, 260px); aspect-ratio:1/1; flex-shrink:0;
 }
 .ring-svg{
   position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
@@ -213,22 +216,22 @@ input[type=number]{ text-align:center; }
   60%{ transform: scale(1.08) rotate(4deg); opacity:1; }
   100%{ transform: scale(1) rotate(0deg); }
 }
-.tile-emoji{ font-size: clamp(64px, 16vw, 128px); line-height:1; }
-.tile-label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size: clamp(16px,3vw,22px); color:var(--plum); margin-top:8px; text-align:center; padding:0 12px; }
-.tile-placeholder{ color: var(--plum-soft); font-size:15px; text-align:center; padding:0 20px; font-weight:700; }
+.tile-emoji{ font-size: clamp(32px, 9vh, 128px); line-height:1; }
+.tile-label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size: clamp(13px, 2.4vh, 22px); color:var(--plum); margin-top: clamp(2px,0.8vh,8px); text-align:center; padding:0 12px; }
+.tile-placeholder{ color: var(--plum-soft); font-size: clamp(12px,1.8vh,15px); text-align:center; padding:0 20px; font-weight:700; }
 
-.progress-line{ font-weight:700; color:var(--plum-soft); font-size:14px; }
-.progress-bar{ width:min(90vw,340px); height:12px; border-radius:999px; background:var(--line); overflow:hidden; }
+.progress-line{ font-weight:700; color:var(--plum-soft); font-size: clamp(12px,1.6vh,14px); }
+.progress-bar{ width:min(90vw,340px); height: clamp(7px,1.2vh,12px); border-radius:999px; background:var(--line); overflow:hidden; }
 .progress-bar > div{ height:100%; background: var(--leaf); border-radius:999px; transition: width 0.3s ease; }
 
-.trail{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; max-width: 640px; }
+.trail{ display:flex; gap: clamp(4px,0.8vh,8px); flex-wrap:wrap; justify-content:center; max-width: 640px; }
 .trail .chip{
-  width:38px; height:38px; border-radius:12px; background:var(--paper);
+  width: clamp(24px, 4.2vh, 38px); height: clamp(24px, 4.2vh, 38px); border-radius:12px; background:var(--paper);
   border:2px solid var(--line); display:flex; align-items:center; justify-content:center;
-  font-size:20px;
+  font-size: clamp(13px, 2.4vh, 20px);
 }
 
-.action-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.action-row{ display:flex; gap: clamp(6px,1.2vh,10px); flex-wrap:wrap; justify-content:center; }
 
 /* ---------- Card grid (kaartgenerator / check) ---------- */
 .bingo-card{
@@ -298,6 +301,16 @@ input[type=number]{ text-align:center; }
   body{ background:#fff; }
   .no-print{ display:none !important; }
   .wrap{ max-width:none; padding:0; }
+}
+
+/* ---------- Compacte weergave: alleen als de trekker actief is ---------- */
+body.game-active .wrap{ padding: clamp(8px,2vh,20px) clamp(10px,2vw,16px) clamp(8px,2vh,16px); max-width:1100px; }
+body.game-active .topbar{ margin-bottom: clamp(6px,1.4vh,18px); }
+body.game-active h1.page-title{ font-size: clamp(16px, 2.6vh, 26px); margin: 0; }
+.left-panel .btn{
+  padding: clamp(8px,1.6vh,14px) clamp(12px,2.4vw,22px);
+  font-size: clamp(12px, 1.8vh, 15px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.12);
 }
 
 /* ---------- Draai-hint: alleen de trekker (spelscherm) vraagt om een breed scherm ---------- */
