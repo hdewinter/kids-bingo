@@ -11,6 +11,10 @@
 <script src="vendor-qrcode.min.js"></script>
 </head>
 <body>
+<div class="splash" id="splashScreen">
+  <div class="splash-emoji">🎉</div>
+  <div class="splash-text">Kids Bingo wordt geladen…</div>
+</div>
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
@@ -32,12 +36,12 @@
       </div>
       <div class="field">
         <label>Snelheid bij automatisch trekken</label>
-        <div class="num-input">
-          <button type="button" id="ivDown">−</button>
-          <input type="number" id="intInput" value="6" min="2" max="60">
-          <button type="button" id="ivUp">+</button>
+        <div class="speed-row">
+          <span class="speed-icon" id="speedIcon">🐢</span>
+          <input type="range" id="intInput" value="6" min="2" max="15" step="1">
+          <span class="speed-value" id="speedValue">6 sec</span>
         </div>
-        <div class="hint">Aantal seconden tussen elk plaatje bij automatisch trekken.</div>
+        <div class="hint">Schuif naar het konijn voor snel trekken (&lt;4 sec), naar de schildpad voor langzaam (&gt;4 sec).</div>
       </div>
       <div class="field">
         <label>Geluid</label>
@@ -194,8 +198,34 @@
   buildThemeGrid();
   buildSoundRow();
 
-  document.getElementById('ivDown').onclick = () => { intInput.value = Math.max(2, (parseInt(intInput.value,10)||6) - 1); };
-  document.getElementById('ivUp').onclick = () => { intInput.value = Math.min(60, (parseInt(intInput.value,10)||6) + 1); };
+  const speedIcon = document.getElementById('speedIcon');
+  const speedValue = document.getElementById('speedValue');
+  function updateSpeedDisplay(){
+    const v = parseInt(intInput.value,10);
+    speedValue.textContent = v + ' sec';
+    const wasSlow = speedIcon.textContent === '🐢';
+    const nowSlow = v > 4;
+    speedIcon.textContent = nowSlow ? '🐢' : '🐇';
+    if(wasSlow !== nowSlow){
+      speedIcon.classList.remove('pop'); void speedIcon.offsetWidth; speedIcon.classList.add('pop');
+    }
+  }
+  intInput.addEventListener('input', updateSpeedDisplay);
+  updateSpeedDisplay();
+
+  /* ===== Splash / laadscherm ===== */
+  const splashScreen = document.getElementById('splashScreen');
+  function hideSplash(){
+    splashScreen.classList.add('hidden');
+    setTimeout(() => { splashScreen.style.display = 'none'; }, 400);
+  }
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const pageReady = new Promise(resolve => {
+    if(document.readyState === 'complete') resolve();
+    else window.addEventListener('load', resolve, { once:true });
+  });
+  Promise.all([fontsReady, pageReady]).then(hideSplash).catch(hideSplash);
+  setTimeout(hideSplash, 2500); // vangnet: nooit langer dan 2,5 sec blijven hangen
 
   let audioCtx = null;
   function playAnnounce(item){
@@ -306,7 +336,7 @@
 
   startBtn.onclick = () => {
     const iv = parseInt(intInput.value,10);
-    if(!iv || iv < 2 || iv > 60){ settingsError.textContent = 'Kies een geldig interval (2 t/m 60 seconden).'; return; }
+    if(!iv || iv < 2 || iv > 15){ settingsError.textContent = 'Kies een geldig interval (2 t/m 15 seconden).'; return; }
     settingsError.textContent = '';
     intervalSec = iv;
     currentThemeId = selectedThemeId;
