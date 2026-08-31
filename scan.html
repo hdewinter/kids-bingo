@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kids Bingo — Kaart checken</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="bingo-kids-common.js"></script>
+<script src="vendor-jsqr.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
+    <div class="nav-links">
+      <a href="index.html">Trekker</a>
+      <a href="cards.html">Kaarten maken</a>
+      <a href="scan.html" class="current">Kaart checken</a>
+    </div>
+  </div>
+
+  <h1 class="page-title">Kaart checken</h1>
+  <p class="page-sub">Scan eerst de trekking-QR vanaf de trekker, en check daarna kaarten — met de camera, of door de code in te typen.</p>
+
+  <div class="card">
+    <div class="trekking-status">
+      <span>Trekking: <span id="trekkingCount">nog niet geladen</span></span>
+      <button class="btn ghost small" id="rescanStateBtn" type="button">Trekking-QR scannen</button>
+    </div>
+
+    <div class="scan-video-wrap" id="scanVideoWrap">
+      <video id="scanVideo" playsinline muted></video>
+    </div>
+    <div class="scan-hint" id="scanHint">Richt de camera op een QR-code — de trekking-QR of de QR op een kaart. De app herkent zelf wat het is.</div>
+
+    <div id="cardResult"></div>
+
+    <div class="field" style="margin-top:20px;">
+      <label>Of typ de code van de kaart in</label>
+      <input type="text" id="codeInput" placeholder="bv. DIEREN-KIDS4-K3F9P2-04" style="text-transform:uppercase;">
+    </div>
+    <button class="btn sun" id="codeCheckBtn" style="width:100%;">Check</button>
+    <div id="codeResult"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const trekkingCount = document.getElementById('trekkingCount');
+  const rescanStateBtn = document.getElementById('rescanStateBtn');
+  const scanVideoWrap = document.getElementById('scanVideoWrap');
+  const scanVideo = document.getElementById('scanVideo');
+  const scanHint = document.getElementById('scanHint');
+  const cardResult = document.getElementById('cardResult');
+  const codeInput = document.getElementById('codeInput');
+  const codeCheckBtn = document.getElementById('codeCheckBtn');
+  const codeResult = document.getElementById('codeResult');
+
+  let currentThemeId = null;
+  let called = new Set();
+  let stream = null;
+  let scanLoopId = null;
+  let mode = 'state'; // 'state' = trekking-QR scannen, 'card' = kaart scannen
+
+  function updateTrekkingStatus(){
+    if(!currentThemeId){ trekkingCount.textContent = 'nog niet geladen'; return; }
+    trekkingCount.textContent = called.size + ' plaatjes (' + KIDS_THEMES[currentThemeId].label + ')';
+  }
+
+  // Trekking-state uit URL (?state=...) meteen inladen, als aanwezig
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('state')){
+    const st = decodeStateQR(params.get('state'));
+    if(st){ currentThemeId = st.themeId; called = new Set(st.calledIds); updateTrekkingStatus(); mode = 'card'; }
+  }
+
+  function startCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      scanHint.textContent = 'Camera niet beschikbaar op dit toestel. Gebruik de code hieronder.';
+      scanVideoWrap.style.display = 'none';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => {
+      stream = s;
+      scanVideo.srcObject = s;
+      scanVideo.play();
+      scanLoop();
+    }).catch(() => {
+      scanHint.textContent = 'Geen toegang tot de camera. Gebruik de code hieronder.';
+      scanVideoWrap.style.display = 'none';
+    });
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  function scanLoop(){
+    if(scanVideo.readyState === scanVideo.HAVE_ENOUGH_DATA){
+      canvas.width = scanVideo.videoWidth; canvas.height = scanVideo.videoHeight;
+      ctx.drawImage(scanVideo, 0, 0, canvas.width, canvas.height);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if(code && code.data){ handleScannedText(code.data); }
+    }
+    scanLoopId = requestAnimationFrame(scanLoop);
+  }
+
+  function handleScannedText(text){
+    if(text.startsWith('KSTATE:')){
+      const st = decodeStateQR(text);
+      if(st){
+        currentThemeId = st.themeId;
+        called = new Set(st.calledIds);
+        updateTrekkingStatus();
+        scanHint.textContent = 'Trekking geladen! Scan nu een kaart, of typ een code in.';
+      }
+    } else if(text.startsWith('KCARD1:')){
+      const card = decodeCardQR(text);
+      if(card){
+        if(currentThemeId && card.themeId !== currentThemeId){
+          cardResult.innerHTML = '<div class="scan-hint">Deze kaart hoort bij een ander thema dan de geladen trekking.</div>';
+          return;
+        }
+        showCardResult(card);
+      }
+    }
+  }
+
+  function showCardResult(card){
+    const res = checkCardAgainstDrawn(card, called);
+    cardResult.innerHTML = renderCheckResultHTML(res, card, called);
+  }
+
+  rescanStateBtn.onclick = () => { scanHint.textContent = 'Richt de camera op de trekking-QR op het trekker-scherm.'; };
+
+  codeCheckBtn.onclick = () => {
+    const card = decodeTextCode(codeInput.value);
+    if(!card){
+      codeResult.innerHTML = '<div class="scan-hint">Ongeldige code. Controleer de spelling (bv. DIEREN-KIDS4-K3F9P2-04).</div>';
+      return;
+    }
+    if(currentThemeId && card.themeId !== currentThemeId){
+      codeResult.innerHTML = '<div class="scan-hint">Deze kaart hoort bij een ander thema dan de geladen trekking.</div>';
+      return;
+    }
+    const res = checkCardAgainstDrawn(card, called);
+    codeResult.innerHTML = renderCheckResultHTML(res, card, called);
+  };
+
+  updateTrekkingStatus();
+  startCamera();
+  window.addEventListener('beforeunload', () => {
+    if(scanLoopId) cancelAnimationFrame(scanLoopId);
+    if(stream) stream.getTracks().forEach(t => t.stop());
+  });
+})();
+</script>
+</body>
+</html>
