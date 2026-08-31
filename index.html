@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kids Bingo — Trekker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="bingo-kids-common.js"></script>
+<script src="vendor-qrcode.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
+    <div class="nav-links">
+      <a href="index.html" class="current">Trekker</a>
+      <a href="cards.html">Kaarten maken</a>
+      <a href="scan.html">Kaart checken</a>
+    </div>
+  </div>
+
+  <!-- ===== Instellingen ===== -->
+  <div id="settingsScreen">
+    <h1 class="page-title">Kies een thema</h1>
+    <p class="page-sub">Trek plaatjes uit een thema en laat spelers meebingoën op hun eigen kaart.</p>
+    <div class="card">
+      <div class="field">
+        <label>Thema</label>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+      <div class="field">
+        <label>Snelheid bij automatisch trekken</label>
+        <div class="num-input">
+          <button type="button" id="ivDown">−</button>
+          <input type="number" id="intInput" value="6" min="2" max="60">
+          <button type="button" id="ivUp">+</button>
+        </div>
+        <div class="hint">Aantal seconden tussen elk plaatje bij automatisch trekken.</div>
+      </div>
+      <div class="field">
+        <label>Geluid</label>
+        <div class="variant-row" id="soundRow"></div>
+      </div>
+      <div class="gen-error" id="settingsError" style="color:#c8203a; font-weight:700; min-height:18px;"></div>
+      <button class="btn coral" id="startBtn" style="width:100%;">Start de trekker</button>
+    </div>
+  </div>
+
+  <!-- ===== Spelscherm ===== -->
+  <div id="gameScreen" style="display:none;">
+    <div class="topbar">
+      <h1 class="page-title" id="gameThemeTitle" style="margin:0;"></h1>
+      <div class="action-row">
+        <button class="btn ghost small" id="backBtn">← Instellingen</button>
+        <button class="btn ghost small" id="checkBtn">Kaart checken</button>
+      </div>
+    </div>
+    <div class="draw-stage">
+      <div class="tile-frame" id="tileFrame">
+        <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
+        <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
+        <div class="tile-label" id="tileLabel"></div>
+      </div>
+      <div class="progress-line" id="statusLine">Klaar om te trekken</div>
+      <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
+      <div class="trail" id="trail"></div>
+      <div class="action-row">
+        <button class="btn coral" id="drawBtn">Trek een plaatje</button>
+        <button class="btn sky" id="autoBtn">Auto starten</button>
+        <button class="btn ghost" id="resetBtn">Opnieuw beginnen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Reset bevestiging ===== -->
+  <div class="overlay" id="resetOverlay">
+    <div class="modal">
+      <h2>Opnieuw beginnen?</h2>
+      <p>Alle getrokken plaatjes worden gewist.</p>
+      <div class="action-row">
+        <button class="btn coral" id="confirmYes">Ja, opnieuw</button>
+        <button class="btn ghost" id="confirmNo">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Check-modal ===== -->
+  <div class="overlay" id="checkOverlay">
+    <div class="modal">
+      <button class="modal-close" id="checkClose">✕</button>
+      <h2>Kaart checken</h2>
+      <div class="tab-row">
+        <button class="tab-btn active" id="tabCode">Code intypen</button>
+        <button class="tab-btn" id="tabState">Trekking-QR tonen</button>
+      </div>
+      <div id="codePane">
+        <div class="field">
+          <label>Code op de kaart</label>
+          <input type="text" id="codeInput" placeholder="bv. DIEREN-KIDS4-K3F9P2-04" style="text-transform:uppercase;">
+        </div>
+        <button class="btn sun" id="codeCheckBtn" style="width:100%;">Check</button>
+        <div id="codeResult"></div>
+      </div>
+      <div id="statePane" style="display:none; text-align:center;">
+        <p class="hint">Scan deze QR op het losse check-toestel (scan.html) om de getrokken plaatjes daar te laden.</p>
+        <div class="qr-wrap"><canvas id="qrStateCanvas"></canvas></div>
+        <div class="hint" id="qrStateCount"></div>
+        <button class="btn ghost small" id="copyStateLinkBtn" style="margin-top:10px;">Link kopiëren</button>
+        <div class="hint" id="stateLinkHint"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const themeGrid = document.getElementById('themeGrid');
+  const soundRow = document.getElementById('soundRow');
+  const intInput = document.getElementById('intInput');
+  const startBtn = document.getElementById('startBtn');
+  const settingsError = document.getElementById('settingsError');
+  const settingsScreen = document.getElementById('settingsScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const gameThemeTitle = document.getElementById('gameThemeTitle');
+  const tileFrame = document.getElementById('tileFrame');
+  const tilePlaceholder = document.getElementById('tilePlaceholder');
+  const tileEmoji = document.getElementById('tileEmoji');
+  const tileLabel = document.getElementById('tileLabel');
+  const statusLine = document.getElementById('statusLine');
+  const progressFill = document.getElementById('progressFill');
+  const trail = document.getElementById('trail');
+  const drawBtn = document.getElementById('drawBtn');
+  const autoBtn = document.getElementById('autoBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const backBtn = document.getElementById('backBtn');
+  const checkBtn = document.getElementById('checkBtn');
+  const resetOverlay = document.getElementById('resetOverlay');
+  const confirmYes = document.getElementById('confirmYes');
+  const confirmNo = document.getElementById('confirmNo');
+  const checkOverlay = document.getElementById('checkOverlay');
+  const checkClose = document.getElementById('checkClose');
+  const tabCode = document.getElementById('tabCode');
+  const tabState = document.getElementById('tabState');
+  const codePane = document.getElementById('codePane');
+  const statePane = document.getElementById('statePane');
+  const codeInput = document.getElementById('codeInput');
+  const codeCheckBtn = document.getElementById('codeCheckBtn');
+  const codeResult = document.getElementById('codeResult');
+  const qrStateCanvas = document.getElementById('qrStateCanvas');
+  const qrStateCount = document.getElementById('qrStateCount');
+  const copyStateLinkBtn = document.getElementById('copyStateLinkBtn');
+  const stateLinkHint = document.getElementById('stateLinkHint');
+
+  let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
+  if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
+  let soundMode = localStorage.getItem('kidsbingo-sound') || 'speech';
+  let intervalSec = 6;
+  let currentThemeId = null;
+  let pool = [], poolIndex = 0, called = new Set();
+  let autoTimer = null;
+  let speechReady = false;
+
+  function buildThemeGrid(){
+    themeGrid.innerHTML = '';
+    Object.values(KIDS_THEMES).forEach(t => {
+      const tile = document.createElement('div');
+      tile.className = 'theme-tile' + (t.id === selectedThemeId ? ' active' : '');
+      tile.innerHTML = '<div class="t-icon">'+t.icon+'</div><div class="t-label">'+t.label+'</div>';
+      tile.onclick = () => {
+        selectedThemeId = t.id;
+        localStorage.setItem('kidsbingo-theme', t.id);
+        buildThemeGrid();
+      };
+      themeGrid.appendChild(tile);
+    });
+  }
+  function buildSoundRow(){
+    soundRow.innerHTML = '';
+    const opts = [
+      {id:'speech', title:'Spreek naam hardop', sub:'Fijn voor kinderen die nog niet lezen'},
+      {id:'beep', title:'Alleen een piepje', sub:'Kort geluidssignaal per plaatje'},
+      {id:'off', title:'Geen geluid', sub:'Alleen zichtbaar op het scherm'}
+    ];
+    opts.forEach(o => {
+      const btn = document.createElement('div');
+      btn.className = 'variant-btn' + (soundMode === o.id ? ' active' : '');
+      btn.innerHTML = '<div class="v-title">'+o.title+'</div><div class="v-sub">'+o.sub+'</div>';
+      btn.onclick = () => { soundMode = o.id; localStorage.setItem('kidsbingo-sound', o.id); buildSoundRow(); };
+      soundRow.appendChild(btn);
+    });
+  }
+  buildThemeGrid();
+  buildSoundRow();
+
+  document.getElementById('ivDown').onclick = () => { intInput.value = Math.max(2, (parseInt(intInput.value,10)||6) - 1); };
+  document.getElementById('ivUp').onclick = () => { intInput.value = Math.min(60, (parseInt(intInput.value,10)||6) + 1); };
+
+  let audioCtx = null;
+  function playAnnounce(item){
+    if(soundMode === 'off') return;
+    if(soundMode === 'speech' && 'speechSynthesis' in window){
+      try{
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(item.label);
+        u.lang = 'nl-NL'; u.rate = 0.95;
+        speechSynthesis.speak(u);
+      }catch(e){}
+      return;
+    }
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = 660; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+    }catch(e){}
+  }
+
+  function buildPool(themeId){
+    const theme = KIDS_THEMES[themeId];
+    pool = shuffleWith(theme.items.map(it => it.id), mulberry32(randomSeed()));
+    poolIndex = 0; called = new Set();
+  }
+
+  function updateTrail(){
+    trail.innerHTML = '';
+    const theme = KIDS_THEMES[currentThemeId];
+    Array.from(called).forEach(id => {
+      const item = theme.itemById[id];
+      const c = document.createElement('div');
+      c.className = 'chip';
+      c.textContent = item.emoji;
+      c.title = item.label;
+      trail.appendChild(c);
+    });
+  }
+
+  function drawItem(){
+    const theme = KIDS_THEMES[currentThemeId];
+    if(poolIndex >= pool.length){
+      statusLine.textContent = 'Alle plaatjes zijn getrokken!';
+      stopAuto();
+      return;
+    }
+    const id = pool[poolIndex]; poolIndex++;
+    called.add(id);
+    const item = theme.itemById[id];
+
+    tilePlaceholder.style.display = 'none';
+    tileEmoji.style.display = 'block';
+    tileEmoji.textContent = item.emoji;
+    tileLabel.textContent = item.label;
+    tileFrame.classList.remove('pop'); void tileFrame.offsetWidth; tileFrame.classList.add('pop');
+
+    playAnnounce(item);
+    updateTrail();
+    const pct = Math.round((called.size/theme.items.length)*100);
+    progressFill.style.width = pct + '%';
+    statusLine.textContent = called.size + ' van ' + theme.items.length + ' getrokken';
+
+    if(called.size >= theme.items.length){
+      statusLine.textContent = 'Alle plaatjes zijn getrokken!';
+      stopAuto();
+    }
+  }
+
+  function startAuto(){
+    if(autoTimer) return;
+    autoBtn.textContent = 'Auto pauzeren';
+    autoTimer = setInterval(drawItem, intervalSec*1000);
+  }
+  function stopAuto(){
+    if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+    autoBtn.textContent = 'Auto starten';
+  }
+
+  drawBtn.onclick = () => { if(autoTimer) stopAuto(); drawItem(); };
+  autoBtn.onclick = () => { autoTimer ? stopAuto() : startAuto(); };
+
+  function performReset(){
+    stopAuto();
+    buildPool(currentThemeId);
+    tilePlaceholder.style.display = 'block';
+    tileEmoji.style.display = 'none';
+    tileEmoji.textContent = ''; tileLabel.textContent = '';
+    statusLine.textContent = 'Klaar om te trekken';
+    progressFill.style.width = '0%';
+    trail.innerHTML = '';
+  }
+  resetBtn.onclick = () => { resetOverlay.classList.add('active'); };
+  confirmYes.onclick = () => { resetOverlay.classList.remove('active'); performReset(); };
+  confirmNo.onclick = () => { resetOverlay.classList.remove('active'); };
+  resetOverlay.addEventListener('click', e => { if(e.target === resetOverlay) resetOverlay.classList.remove('active'); });
+
+  backBtn.onclick = () => {
+    stopAuto();
+    gameScreen.style.display = 'none';
+    settingsScreen.style.display = 'block';
+    buildThemeGrid(); buildSoundRow();
+  };
+
+  startBtn.onclick = () => {
+    const iv = parseInt(intInput.value,10);
+    if(!iv || iv < 2 || iv > 60){ settingsError.textContent = 'Kies een geldig interval (2 t/m 60 seconden).'; return; }
+    settingsError.textContent = '';
+    intervalSec = iv;
+    currentThemeId = selectedThemeId;
+    gameThemeTitle.textContent = KIDS_THEMES[currentThemeId].icon + ' ' + KIDS_THEMES[currentThemeId].label;
+    buildPool(currentThemeId);
+    tilePlaceholder.style.display = 'block';
+    tileEmoji.style.display = 'none';
+    tileEmoji.textContent = ''; tileLabel.textContent = '';
+    statusLine.textContent = 'Klaar om te trekken';
+    progressFill.style.width = '0%';
+    trail.innerHTML = '';
+    settingsScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+    if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
+      try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
+    }
+  };
+
+  /* ===== Check-modal ===== */
+  function openCheckModal(){ checkOverlay.classList.add('active'); switchTab('code'); }
+  checkBtn.onclick = openCheckModal;
+  checkClose.onclick = () => checkOverlay.classList.remove('active');
+  checkOverlay.addEventListener('click', e => { if(e.target === checkOverlay) checkOverlay.classList.remove('active'); });
+
+  function switchTab(which){
+    tabCode.classList.toggle('active', which === 'code');
+    tabState.classList.toggle('active', which === 'state');
+    codePane.style.display = which === 'code' ? 'block' : 'none';
+    statePane.style.display = which === 'state' ? 'block' : 'none';
+    if(which === 'state') renderStateQR();
+    else { codeResult.innerHTML = ''; codeInput.value = ''; }
+  }
+  tabCode.onclick = () => switchTab('code');
+  tabState.onclick = () => switchTab('state');
+
+  codeCheckBtn.onclick = () => {
+    const card = decodeTextCode(codeInput.value);
+    if(!card || card.themeId !== currentThemeId){
+      codeResult.innerHTML = '<div class="scan-hint">Ongeldige code, of een kaart van een ander thema. Controleer de spelling.</div>';
+      return;
+    }
+    const res = checkCardAgainstDrawn(card, called);
+    codeResult.innerHTML = renderCheckResultHTML(res, card, called);
+  };
+
+  function renderStateQR(){
+    const text = encodeStateQR(currentThemeId, Array.from(called));
+    qrStateCount.textContent = called.size + ' plaatje' + (called.size === 1 ? '' : 's') + ' getrokken';
+    QRCode.toCanvas(qrStateCanvas, text, { width:220, margin:1, color:{ dark:'#3A2E52', light:'#ffffff' } }, function(err){ if(err) console.error(err); });
+  }
+  copyStateLinkBtn.onclick = () => {
+    const text = encodeStateQR(currentThemeId, Array.from(called));
+    const url = window.location.origin + window.location.pathname.replace('index.html','') + 'scan.html?state=' + encodeURIComponent(text);
+    navigator.clipboard.writeText(url).then(() => {
+      stateLinkHint.textContent = "Link gekopieerd — stuur 'm door (WhatsApp, AirDrop, ...) i.p.v. het scherm te scannen.";
+    }).catch(() => { stateLinkHint.textContent = url; });
+  };
+})();
+</script>
+</body>
+</html>
