@@ -11,6 +11,10 @@
 <script src="vendor-jsqr.min.js"></script>
 </head>
 <body>
+<div class="splash" id="splashScreen">
+  <div class="splash-emoji">🎉</div>
+  <div class="splash-text">Kids Bingo wordt geladen…</div>
+</div>
 <div class="wrap">
   <div class="topbar">
     <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
@@ -48,6 +52,19 @@
 
 <script>
 (function(){
+  const splashScreen = document.getElementById('splashScreen');
+  function hideSplash(){
+    splashScreen.classList.add('hidden');
+    setTimeout(() => { splashScreen.style.display = 'none'; }, 400);
+  }
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const pageReady = new Promise(resolve => {
+    if(document.readyState === 'complete') resolve();
+    else window.addEventListener('load', resolve, { once:true });
+  });
+  Promise.all([fontsReady, pageReady]).then(hideSplash).catch(hideSplash);
+  setTimeout(hideSplash, 2500);
+
   const trekkingCount = document.getElementById('trekkingCount');
   const rescanStateBtn = document.getElementById('rescanStateBtn');
   const scanVideoWrap = document.getElementById('scanVideoWrap');
