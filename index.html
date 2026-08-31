@@ -93,6 +93,7 @@
           <h2>Overzicht</h2>
           <div class="count" id="overviewCount">0 / 0</div>
         </div>
+        <div class="overview-progress"><div id="overviewProgressFill" style="width:0%;"></div></div>
         <div class="grid-wrap"><div id="itemGrid"></div></div>
       </div>
     </div>
@@ -157,6 +158,7 @@
   const trail = document.getElementById('trail');
   const itemGrid = document.getElementById('itemGrid');
   const overviewCount = document.getElementById('overviewCount');
+  const overviewProgressFill = document.getElementById('overviewProgressFill');
   const drawBtn = document.getElementById('drawBtn');
   const autoBtn = document.getElementById('autoBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -283,6 +285,7 @@
       itemGrid.appendChild(cell);
     });
     overviewCount.textContent = called.size + ' / ' + theme.items.length;
+    overviewProgressFill.style.width = (theme.items.length ? Math.round((called.size/theme.items.length)*100) : 0) + '%';
     layoutItemGrid();
   }
 
@@ -396,6 +399,7 @@
     progressFill.style.width = pct + '%';
     statusLine.textContent = called.size + ' van ' + theme.items.length + ' getrokken';
     overviewCount.textContent = called.size + ' / ' + theme.items.length;
+    overviewProgressFill.style.width = pct + '%';
 
     if(called.size >= theme.items.length){
       statusLine.textContent = 'Alle plaatjes zijn getrokken!';
