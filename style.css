@@ -116,8 +116,7 @@ input[type=number]{ text-align:center; }
 }
 
 .speed-row{ display:flex; align-items:center; gap:14px; }
-.speed-row .speed-icon{ font-size:30px; width:38px; text-align:center; flex-shrink:0; transition: transform 0.15s ease; }
-.speed-row .speed-icon.pop{ transform: scale(1.25); }
+.speed-row .speed-icon{ font-size:30px; width:38px; text-align:center; flex-shrink:0; }
 .speed-row input[type=range]{
   flex:1; -webkit-appearance:none; appearance:none; height:10px; border-radius:999px;
   background: linear-gradient(90deg, var(--leaf), var(--sun) 50%, var(--coral));
@@ -189,8 +188,20 @@ input[type=number]{ text-align:center; }
 }
 @keyframes iCellFlash{ 0%{ transform: scale(0.75);} 60%{ transform: scale(1.18);} 100%{ transform: scale(1);} }
 
+.cage{
+  position:relative;
+  width: min(64vw, 300px); aspect-ratio:1/1;
+}
+.ring-svg{
+  position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+}
+#ringProgress{
+  fill:none; stroke: var(--leaf); stroke-width:2.6;
+  stroke-linecap:round; opacity:0;
+  transition: opacity 0.2s ease;
+}
 .tile-frame{
-  width: min(64vw, 300px); aspect-ratio:1/1; border-radius:36px;
+  width:100%; aspect-ratio:1/1; border-radius:36px;
   background: linear-gradient(160deg, #FFFDF8, #FFF0DA);
   border:6px solid var(--sun);
   display:flex; align-items:center; justify-content:center; flex-direction:column;
@@ -287,6 +298,23 @@ input[type=number]{ text-align:center; }
   body{ background:#fff; }
   .no-print{ display:none !important; }
   .wrap{ max-width:none; padding:0; }
+}
+
+/* ---------- Draai-hint: alleen de trekker (spelscherm) vraagt om een breed scherm ---------- */
+#rotateHint{
+  display:none;
+  position:fixed; inset:0; z-index:999;
+  background: var(--cream);
+  flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:14px; padding:32px;
+}
+#rotateHint svg{ width:60px; height:60px; animation: rotatePulse 1.6s ease-in-out infinite; }
+#rotateHint .rh-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--plum); }
+#rotateHint .rh-sub{ color:var(--plum-soft); font-size:14px; max-width:38ch; }
+@keyframes rotatePulse{ 0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(90deg); } }
+@media (orientation: portrait) and (max-width: 900px){
+  body.game-active #rotateHint{ display:flex; }
+  body.game-active #gameScreen{ display:none !important; }
 }
 
 @media (max-width: 640px){
