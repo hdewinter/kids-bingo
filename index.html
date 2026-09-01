@@ -59,7 +59,7 @@
   </div>
 
   <!-- ===== Spelscherm ===== -->
-  <div id="gameScreen" style="display:none;">
+  <div id="gameScreen">
     <div class="topbar">
       <h1 class="page-title" id="gameThemeTitle" style="margin:0;"></h1>
       <div class="action-row">
@@ -445,7 +445,7 @@
     stopAuto();
     setRingIdle();
     document.body.classList.remove('game-active');
-    gameScreen.style.display = 'none';
+    gameScreen.classList.remove('active');
     settingsScreen.style.display = 'block';
     buildThemeGrid(); buildSoundRow();
   };
@@ -465,7 +465,7 @@
     progressFill.style.width = '0%';
     trail.innerHTML = '';
     settingsScreen.style.display = 'none';
-    gameScreen.style.display = 'block';
+    gameScreen.classList.add('active');
     document.body.classList.add('game-active');
     scheduleItemGridLayout();
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
