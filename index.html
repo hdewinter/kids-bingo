@@ -69,16 +69,12 @@
     </div>
     <div class="game-body">
       <div class="left-panel">
-        <div class="cage">
-          <svg class="ring-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <rect id="ringProgress" x="3" y="3" width="94" height="94" rx="13"></rect>
-          </svg>
-          <div class="tile-frame" id="tileFrame">
-            <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
-            <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
-            <div class="tile-label" id="tileLabel"></div>
-          </div>
+        <div class="tile-frame" id="tileFrame">
+          <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
+          <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
+          <div class="tile-label" id="tileLabel"></div>
         </div>
+        <div class="countdown-bar" id="countdownBar"><div id="countdownBarFill"></div></div>
         <div class="progress-line" id="statusLine">Klaar om te trekken</div>
         <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
         <div class="trail" id="trail"></div>
@@ -335,9 +331,8 @@
     });
   }
 
-  const ringProgress = document.getElementById('ringProgress');
-  let RING_C = 0;
-  try{ RING_C = ringProgress.getTotalLength(); ringProgress.style.strokeDasharray = RING_C; }catch(e){ RING_C = 0; }
+  const countdownBar = document.getElementById('countdownBar');
+  const countdownBarFill = document.getElementById('countdownBarFill');
   let cdRAF = null, cdStartTs = 0;
 
   function lerpColor(p){
@@ -350,24 +345,21 @@
   }
   function setRingIdle(){
     if(cdRAF){ cancelAnimationFrame(cdRAF); cdRAF = null; }
-    ringProgress.style.opacity = '0';
+    countdownBar.classList.remove('active');
   }
   function cdTick(now){
     if(!autoTimer){ setRingIdle(); return; }
     const elapsed = now - cdStartTs;
     const progress = Math.min(elapsed / (intervalSec*1000), 1);
-    ringProgress.style.strokeDashoffset = (progress * RING_C).toFixed(2);
-    ringProgress.style.stroke = lerpColor(progress);
+    countdownBarFill.style.width = ((1 - progress) * 100).toFixed(1) + '%';
+    countdownBarFill.style.background = lerpColor(progress);
     if(progress < 1){ cdRAF = requestAnimationFrame(cdTick); }
   }
   function startCountdownCycle(){
-    if(!RING_C){
-      try{ RING_C = ringProgress.getTotalLength(); ringProgress.style.strokeDasharray = RING_C; }catch(e){}
-    }
     if(cdRAF) cancelAnimationFrame(cdRAF);
-    ringProgress.style.opacity = '1';
-    ringProgress.style.strokeDashoffset = '0';
-    ringProgress.style.stroke = lerpColor(0);
+    countdownBar.classList.add('active');
+    countdownBarFill.style.width = '100%';
+    countdownBarFill.style.background = lerpColor(0);
     cdStartTs = performance.now();
     cdRAF = requestAnimationFrame(cdTick);
   }
