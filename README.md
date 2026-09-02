@@ -2,15 +2,16 @@
 
 Digitale kinderbingo met plaatjes (emoji) in plaats van getallen, gebaseerd op
 de opzet van [Bingo 2.0](https://github.com/hdewinter/bingo-2.0): dezelfde
-seeded kaartgeneratie, intypbare code en QR-check, maar dan met thema's
-zoals Dieren, Boerderij, Ruimte of Sinterklaas.
+seeded kaartgeneratie, maar dan met thema's zoals Dieren, Boerderij, Ruimte
+of Sinterklaas. Kaarten worden geprint en gelamineerd; checken gebeurt met
+de hand door een volwassene aan de hand van het overzicht op de trekker —
+geen QR-codes of scanner nodig.
 
 Live: https://hdewinter.github.io/kids-bingo/
 
 ## Pagina's
-- `index.html` — de trekker: kies een thema, trek plaatjes (los of automatisch), check kaarten
-- `cards.html` — kaartgenerator: kies thema + formaat (3x3 / 4x4 / 5x5), genereer/print kaarten, digitale kaart met tik-om-te-markeren
-- `scan.html` — los check-toestel: scan de trekking-QR + kaart-QR's met de camera, of typ een code in
+- `index.html` — de trekker: kies een thema, trek plaatjes (los of automatisch). Het overzichtsrooster rechts laat precies zien welke plaatjes al getrokken zijn, zodat je een kaart handmatig kunt checken.
+- `cards.html` — kaartgenerator: kies thema + formaat (3x3 / 4x4 / 5x5), genereer kaarten en print/lamineer ze. Elke kaart toont duidelijk het thema, zodat je weet welke trekking erbij hoort.
 
 ## Kaartformaten
 - **Klein (3x3)** — 9 plaatjes, geen vrij vakje
@@ -37,11 +38,6 @@ mijnthema: {
 
 Vuistregels:
 - **Minimaal 25 items** per thema, anders werkt de 5x5-kaart niet.
-- `id` van het thema (de sleutel, bv. `mijnthema`) nooit meer wijzigen zodra
-  er kaarten mee geprint zijn — die staat namelijk in de code op de kaart
-  (bv. `MIJNTHEMA-KIDS4-...`). Items zelf mag je wel aanpassen/toevoegen; de
-  QR-code op een kaart blijft altijd werken (die bevat de kaart zelf), maar
-  een oude *intypcode* kan na zo'n wijziging een andere kaart teruggeven.
 - Bewaar de wijziging via de GitHub-webinterface (bewerk `bingo-kids-common.js`
   direct in de browser, of upload een nieuwe versie) en commit — GitHub Pages
   publiceert automatisch.
@@ -52,9 +48,5 @@ per item i.p.v. een emoji-teken) — vraag dat gerust apart aan.
 
 ## Technisch
 Volledig statisch (geen backend/database), net als Bingo 2.0:
-- Seeded RNG (`mulberry32`) zodat een kaart altijd exact terug te
-  berekenen is uit zijn korte code.
-- QR-codes bevatten de kaart-inhoud zelf (niet alleen de seed), zodat
-  scannen blijft werken ook als een thema later bewerkt wordt.
-- Voortgang/markeringen worden lokaal opgeslagen (`localStorage`), niets
-  wordt naar een server gestuurd.
+- Seeded RNG (`mulberry32`) zodat kaartgeneratie reproduceerbaar en uniek per kaart is.
+- Geen QR-codes, scanner of digitale check — controle gebeurt met de hand.
