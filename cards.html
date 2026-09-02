@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="bingo-kids-common.js"></script>
-<script src="vendor-qrcode.min.js"></script>
 </head>
 <body>
 <div class="splash" id="splashScreen">
@@ -21,52 +20,36 @@
     <div class="nav-links">
       <a href="index.html">Trekker</a>
       <a href="cards.html" class="current">Kaarten maken</a>
-      <a href="scan.html">Kaart checken</a>
     </div>
   </div>
 
-  <div id="generatorView">
-    <h1 class="page-title no-print">Maak bingokaarten</h1>
-    <p class="page-sub no-print">Kies een thema en een kaartformaat, en genereer unieke kaarten om te printen of digitaal te delen.</p>
+  <h1 class="page-title no-print">Maak bingokaarten</h1>
+  <p class="page-sub no-print">Kies een thema en een kaartformaat, genereer unieke kaarten en print + lamineer ze. Checken doe je met de hand, met het overzicht op de trekker ernaast.</p>
 
-    <div class="card no-print">
-      <div class="field">
-        <label>Thema</label>
-        <div class="theme-grid" id="themeGrid"></div>
-      </div>
-      <div class="field">
-        <label>Kaartformaat</label>
-        <div class="variant-row" id="variantRow"></div>
-      </div>
-      <div class="field">
-        <label id="countLabelField">Aantal kaarten</label>
-        <input type="number" id="countInput" value="8" min="1" max="200">
-        <div class="hint">Elke kaart krijgt een unieke, willekeurige verdeling van plaatjes.</div>
-      </div>
-      <button class="btn coral" id="generateBtn">Genereer kaarten</button>
-      <div class="gen-error" id="genError" style="color:#c8203a; font-weight:700; min-height:18px;"></div>
+  <div class="card no-print">
+    <div class="field">
+      <label>Thema</label>
+      <div class="theme-grid" id="themeGrid"></div>
     </div>
-
-    <div class="action-row no-print" id="actionsRow" style="display:none; margin-top:18px;">
-      <button class="btn sun" id="printBtn">Print / download PDF</button>
-      <span class="hint" id="countLabel" style="align-self:center;"></span>
+    <div class="field">
+      <label>Kaartformaat</label>
+      <div class="variant-row" id="variantRow"></div>
     </div>
-
-    <div id="cardsArea"></div>
+    <div class="field">
+      <label id="countLabelField">Aantal kaarten</label>
+      <input type="number" id="countInput" value="8" min="1" max="200">
+      <div class="hint">Elke kaart krijgt een unieke, willekeurige verdeling van plaatjes.</div>
+    </div>
+    <button class="btn coral" id="generateBtn">Genereer kaarten</button>
+    <div class="gen-error" id="genError" style="color:#c8203a; font-weight:700; min-height:18px;"></div>
   </div>
 
-  <!-- ===== Digitale kaart (los scherm, tik-om-te-markeren) ===== -->
-  <div id="singleView" style="display:none;">
-    <div class="topbar no-print">
-      <button class="btn ghost small" id="singleClose">← Sluiten</button>
-      <div class="action-row">
-        <button class="btn ghost small" id="clearMarksBtn">Wis markeringen</button>
-        <button class="btn sun small" id="singleShare">Link kopiëren</button>
-      </div>
-    </div>
-    <div id="singleCardWrap" style="max-width:420px; margin:0 auto;"></div>
-    <div class="hint" id="shareHint" style="text-align:center; margin-top:12px;"></div>
+  <div class="action-row no-print" id="actionsRow" style="display:none; margin-top:18px;">
+    <button class="btn sun" id="printBtn">Print / download PDF</button>
+    <span class="hint" id="countLabel" style="align-self:center;"></span>
   </div>
+
+  <div id="cardsArea"></div>
 </div>
 
 <script>
@@ -92,18 +75,10 @@
   const actionsRow = document.getElementById('actionsRow');
   const countLabel = document.getElementById('countLabel');
   const cardsArea = document.getElementById('cardsArea');
-  const generatorView = document.getElementById('generatorView');
-  const singleView = document.getElementById('singleView');
-  const singleCardWrap = document.getElementById('singleCardWrap');
-  const singleClose = document.getElementById('singleClose');
-  const clearMarksBtn = document.getElementById('clearMarksBtn');
-  const singleShare = document.getElementById('singleShare');
-  const shareHint = document.getElementById('shareHint');
 
   let selectedThemeId = localStorage.getItem('kidsbingo-theme') || DEFAULT_THEME_ID;
   if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
   let selectedVariantId = DEFAULT_VARIANT_ID;
-  let currentCards = [];
 
   function buildThemeGrid(){
     themeGrid.innerHTML = '';
@@ -128,7 +103,7 @@
   buildThemeGrid();
   buildVariantRow();
 
-  function buildCardDOM(card, index, interactive){
+  function buildCardDOM(card, index){
     const theme = KIDS_THEMES[card.themeId];
     const variant = KIDS_VARIANTS[card.variantId];
     const wrap = document.createElement('div');
@@ -136,7 +111,7 @@
 
     const label = document.createElement('div');
     label.className = 'card-code';
-    label.textContent = theme.label + ' · ' + variant.label + ' · #' + (index+1) + ' · ' + (card.code || '');
+    label.textContent = theme.icon + ' ' + theme.label + ' · kaart #' + (index+1);
     wrap.appendChild(label);
 
     const grid = document.createElement('div');
@@ -153,10 +128,6 @@
         } else {
           const item = theme.itemById[v];
           cell.textContent = item ? item.emoji : '❔';
-          cell.dataset.itemId = v;
-        }
-        if(interactive){
-          cell.onclick = () => toggleMark(cell);
         }
         grid.appendChild(cell);
       }
@@ -165,101 +136,27 @@
     return wrap;
   }
 
-  function marksKey(card){ return 'kidsbingo-marks:' + card.code; }
-  function loadMarks(card){
-    try{ return new Set(JSON.parse(localStorage.getItem(marksKey(card)) || '[]')); }catch(e){ return new Set(); }
-  }
-  function saveMarks(card, set){
-    try{ localStorage.setItem(marksKey(card), JSON.stringify(Array.from(set))); }catch(e){}
-  }
-  function toggleMark(cell){
-    if(cell.classList.contains('free')) return;
-    cell.classList.toggle('marked');
-    const wrap = cell.closest('#singleCardWrap');
-    if(wrap && wrap.dataset.code){
-      applyAndSaveMarks(wrap);
-    }
-  }
-  function applyAndSaveMarks(wrap){
-    const marked = new Set();
-    wrap.querySelectorAll('.card-cell.marked').forEach(c => { if(c.dataset.itemId) marked.add(c.dataset.itemId); });
-    saveMarks({code:wrap.dataset.code}, marked);
-  }
-  function applyStoredMarks(wrap, card){
-    const marks = loadMarks(card);
-    wrap.querySelectorAll('.card-cell').forEach(c => {
-      if(c.dataset.itemId && marks.has(c.dataset.itemId)) c.classList.add('marked');
-    });
-  }
-
   generateBtn.onclick = () => {
     const count = parseInt(countInput.value,10);
     if(!count || count < 1 || count > 200){ genError.textContent = 'Kies een geldig aantal kaarten (1 t/m 200).'; return; }
     genError.textContent = '';
-    currentCards = generateCardsForVariant(selectedThemeId, selectedVariantId, count);
+    const cards = generateCardsForVariant(selectedThemeId, selectedVariantId, count);
 
     cardsArea.innerHTML = '';
     const list = document.createElement('div');
     list.className = 'cards-list';
-    currentCards.forEach((card, i) => {
+    cards.forEach((card, i) => {
       const slot = document.createElement('div');
       slot.className = 'card-slot';
-      slot.appendChild(buildCardDOM(card, i, false));
-
-      const qrCanvas = document.createElement('canvas');
-      const qrWrap = document.createElement('div');
-      qrWrap.className = 'qr-wrap no-print';
-      qrWrap.appendChild(qrCanvas);
-      slot.appendChild(qrWrap);
-      QRCode.toCanvas(qrCanvas, encodeCardQR(card), { width:120, margin:1, color:{dark:'#3A2E52',light:'#ffffff'} }, ()=>{});
-
-      const actions = document.createElement('div');
-      actions.className = 'card-actions no-print';
-      const viewBtn = document.createElement('button');
-      viewBtn.className = 'btn ghost small';
-      viewBtn.textContent = 'Digitale kaart';
-      viewBtn.onclick = () => openSingleView(card, i);
-      actions.appendChild(viewBtn);
-      slot.appendChild(actions);
-
+      slot.appendChild(buildCardDOM(card, i));
       list.appendChild(slot);
     });
     cardsArea.appendChild(list);
     actionsRow.style.display = 'flex';
-    countLabel.textContent = currentCards.length + ' kaart' + (currentCards.length === 1 ? '' : 'en') + ' gegenereerd';
+    countLabel.textContent = cards.length + ' kaart' + (cards.length === 1 ? '' : 'en') + ' gegenereerd';
   };
 
   document.getElementById('printBtn').onclick = () => window.print();
-
-  function openSingleView(card, index){
-    generatorView.style.display = 'none';
-    singleView.style.display = 'block';
-    singleCardWrap.innerHTML = '';
-    const dom = buildCardDOM(card, index, true);
-    singleCardWrap.appendChild(dom);
-    singleCardWrap.dataset.code = card.code;
-    applyStoredMarks(singleCardWrap, card);
-    shareHint.textContent = '';
-    singleClose.onclick = () => { generatorView.style.display = 'block'; singleView.style.display = 'none'; };
-    clearMarksBtn.onclick = () => {
-      singleCardWrap.querySelectorAll('.card-cell.marked').forEach(c => c.classList.remove('marked'));
-      saveMarks({code:card.code}, new Set());
-    };
-    singleShare.onclick = () => {
-      const url = window.location.origin + window.location.pathname.replace('cards.html','') +
-        'cards.html?theme=' + card.themeId + '&variant=' + card.variantId + '&code=' + encodeURIComponent(card.code);
-      navigator.clipboard.writeText(url).then(() => {
-        shareHint.textContent = "Link gekopieerd — stuur 'm door zodat een speler zijn eigen kaart kan openen.";
-      }).catch(() => { shareHint.textContent = url; });
-    };
-  }
-
-  // Digitale kaart openen via gedeelde link (?code=...)
-  const params = new URLSearchParams(window.location.search);
-  if(params.get('code')){
-    const card = decodeTextCode(params.get('code'));
-    if(card) openSingleView(card, 0);
-  }
 })();
 </script>
 </body>
