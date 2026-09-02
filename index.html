@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="bingo-kids-common.js"></script>
-<script src="vendor-qrcode.min.js"></script>
 </head>
 <body>
 <div class="splash" id="splashScreen">
@@ -26,7 +25,6 @@
     <div class="nav-links">
       <a href="index.html" class="current">Trekker</a>
       <a href="cards.html">Kaarten maken</a>
-      <a href="scan.html">Kaart checken</a>
     </div>
   </div>
 
@@ -42,9 +40,9 @@
       <div class="field">
         <label>Snelheid bij automatisch trekken</label>
         <div class="speed-row">
-          <span class="speed-icon" title="Snel">🐇</span>
-          <input type="range" id="intInput" value="6" min="2" max="15" step="1">
           <span class="speed-icon" title="Langzaam">🐢</span>
+          <input type="range" id="intInput" value="6" min="2" max="15" step="1">
+          <span class="speed-icon" title="Snel">🐇</span>
           <span class="speed-value" id="speedValue">6 sec</span>
         </div>
         <div class="hint">Schuif naar het konijn voor snel trekken (&lt;4 sec), naar de schildpad voor langzaam (&gt;4 sec).</div>
@@ -64,7 +62,6 @@
       <h1 class="page-title" id="gameThemeTitle" style="margin:0;"></h1>
       <div class="action-row">
         <button class="btn ghost small" id="backBtn">← Instellingen</button>
-        <button class="btn ghost small" id="checkBtn">Kaart checken</button>
       </div>
     </div>
     <div class="game-body">
@@ -106,33 +103,6 @@
       </div>
     </div>
   </div>
-
-  <!-- ===== Check-modal ===== -->
-  <div class="overlay" id="checkOverlay">
-    <div class="modal">
-      <button class="modal-close" id="checkClose">✕</button>
-      <h2>Kaart checken</h2>
-      <div class="tab-row">
-        <button class="tab-btn active" id="tabCode">Code intypen</button>
-        <button class="tab-btn" id="tabState">Trekking-QR tonen</button>
-      </div>
-      <div id="codePane">
-        <div class="field">
-          <label>Code op de kaart</label>
-          <input type="text" id="codeInput" placeholder="bv. DIEREN-KIDS4-K3F9P2-04" style="text-transform:uppercase;">
-        </div>
-        <button class="btn sun" id="codeCheckBtn" style="width:100%;">Check</button>
-        <div id="codeResult"></div>
-      </div>
-      <div id="statePane" style="display:none; text-align:center;">
-        <p class="hint">Scan deze QR op het losse check-toestel (scan.html) om de getrokken plaatjes daar te laden.</p>
-        <div class="qr-wrap"><canvas id="qrStateCanvas"></canvas></div>
-        <div class="hint" id="qrStateCount"></div>
-        <button class="btn ghost small" id="copyStateLinkBtn" style="margin-top:10px;">Link kopiëren</button>
-        <div class="hint" id="stateLinkHint"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -163,19 +133,6 @@
   const resetOverlay = document.getElementById('resetOverlay');
   const confirmYes = document.getElementById('confirmYes');
   const confirmNo = document.getElementById('confirmNo');
-  const checkOverlay = document.getElementById('checkOverlay');
-  const checkClose = document.getElementById('checkClose');
-  const tabCode = document.getElementById('tabCode');
-  const tabState = document.getElementById('tabState');
-  const codePane = document.getElementById('codePane');
-  const statePane = document.getElementById('statePane');
-  const codeInput = document.getElementById('codeInput');
-  const codeCheckBtn = document.getElementById('codeCheckBtn');
-  const codeResult = document.getElementById('codeResult');
-  const qrStateCanvas = document.getElementById('qrStateCanvas');
-  const qrStateCount = document.getElementById('qrStateCount');
-  const copyStateLinkBtn = document.getElementById('copyStateLinkBtn');
-  const stateLinkHint = document.getElementById('stateLinkHint');
 
   let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
   if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
@@ -463,46 +420,6 @@
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
       try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
     }
-  };
-
-  /* ===== Check-modal ===== */
-  function openCheckModal(){ checkOverlay.classList.add('active'); switchTab('code'); }
-  checkBtn.onclick = openCheckModal;
-  checkClose.onclick = () => checkOverlay.classList.remove('active');
-  checkOverlay.addEventListener('click', e => { if(e.target === checkOverlay) checkOverlay.classList.remove('active'); });
-
-  function switchTab(which){
-    tabCode.classList.toggle('active', which === 'code');
-    tabState.classList.toggle('active', which === 'state');
-    codePane.style.display = which === 'code' ? 'block' : 'none';
-    statePane.style.display = which === 'state' ? 'block' : 'none';
-    if(which === 'state') renderStateQR();
-    else { codeResult.innerHTML = ''; codeInput.value = ''; }
-  }
-  tabCode.onclick = () => switchTab('code');
-  tabState.onclick = () => switchTab('state');
-
-  codeCheckBtn.onclick = () => {
-    const card = decodeTextCode(codeInput.value);
-    if(!card || card.themeId !== currentThemeId){
-      codeResult.innerHTML = '<div class="scan-hint">Ongeldige code, of een kaart van een ander thema. Controleer de spelling.</div>';
-      return;
-    }
-    const res = checkCardAgainstDrawn(card, called);
-    codeResult.innerHTML = renderCheckResultHTML(res, card, called);
-  };
-
-  function renderStateQR(){
-    const text = encodeStateQR(currentThemeId, Array.from(called));
-    qrStateCount.textContent = called.size + ' plaatje' + (called.size === 1 ? '' : 's') + ' getrokken';
-    QRCode.toCanvas(qrStateCanvas, text, { width:220, margin:1, color:{ dark:'#3A2E52', light:'#ffffff' } }, function(err){ if(err) console.error(err); });
-  }
-  copyStateLinkBtn.onclick = () => {
-    const text = encodeStateQR(currentThemeId, Array.from(called));
-    const url = window.location.origin + window.location.pathname.replace('index.html','') + 'scan.html?state=' + encodeURIComponent(text);
-    navigator.clipboard.writeText(url).then(() => {
-      stateLinkHint.textContent = "Link gekopieerd — stuur 'm door (WhatsApp, AirDrop, ...) i.p.v. het scherm te scannen.";
-    }).catch(() => { stateLinkHint.textContent = url; });
   };
 })();
 </script>
