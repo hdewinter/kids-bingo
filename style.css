@@ -121,6 +121,7 @@ input[type=number]{ text-align:center; }
   flex:1; -webkit-appearance:none; appearance:none; height:10px; border-radius:999px;
   background: linear-gradient(90deg, var(--leaf), var(--sun) 50%, var(--coral));
   outline:none;
+  transform: scaleX(-1);
 }
 .speed-row input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none; appearance:none; width:28px; height:28px; border-radius:50%;
