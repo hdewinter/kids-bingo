@@ -353,7 +353,7 @@ function decodeCardQR(text){
   return { themeId, variantId, grid, code: null };
 }
 
-/* ---------- Trekking-QR (1 grote QR met de getrokken items, voor scan.html) ---------- */
+/* ---------- Trekking-QR (niet meer gebruikt in de UI, blijft beschikbaar in de bibliotheek) ---------- */
 function encodeStateQR(themeId, calledIdArray){
   return 'KSTATE:' + themeId + ':' + calledIdArray.slice().sort().join(',');
 }
@@ -378,7 +378,7 @@ function checkCardAgainstDrawn(card, calledIdSet){
   return { fullCard, hitCount, total: playable.length };
 }
 
-/* ---------- HTML-weergave van een check-resultaat (gedeeld door index.html en scan.html) ---------- */
+/* ---------- HTML-weergave van een check-resultaat (niet meer gebruikt in de UI, blijft beschikbaar in de bibliotheek) ---------- */
 function renderCheckResultHTML(res, card, calledIdSet){
   const theme = KIDS_THEMES[card.themeId];
   const variant = KIDS_VARIANTS[card.variantId];
