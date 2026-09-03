@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Kids Bingo — Trekker</title>
+<title>Kids Bingo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -23,7 +23,7 @@
   <div class="topbar">
     <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
     <div class="nav-links">
-      <a href="index.html" class="current">Trekker</a>
+      <a href="index.html" class="current">Starten</a>
       <a href="cards.html">Kaarten maken</a>
     </div>
   </div>
@@ -45,14 +45,13 @@
           <span class="speed-icon" title="Snel">🐇</span>
           <span class="speed-value" id="speedValue">6 sec</span>
         </div>
-        <div class="hint">Schuif naar het konijn voor snel trekken (&lt;4 sec), naar de schildpad voor langzaam (&gt;4 sec).</div>
       </div>
       <div class="field">
         <label>Geluid</label>
         <div class="variant-row" id="soundRow"></div>
       </div>
       <div class="gen-error" id="settingsError" style="color:#c8203a; font-weight:700; min-height:18px;"></div>
-      <button class="btn coral" id="startBtn" style="width:100%;">Start de trekker</button>
+      <button class="btn coral" id="startBtn" style="width:100%;">Begin met BINGO</button>
     </div>
   </div>
 
@@ -67,12 +66,12 @@
     <div class="game-body">
       <div class="left-panel">
         <div class="tile-frame" id="tileFrame">
-          <div class="tile-placeholder" id="tilePlaceholder">Klaar om te trekken!</div>
+          <div class="tile-placeholder" id="tilePlaceholder">Klaar voor de BINGO!</div>
           <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
           <div class="tile-label" id="tileLabel"></div>
         </div>
         <div class="countdown-bar" id="countdownBar"><div id="countdownBarFill"></div></div>
-        <div class="progress-line" id="statusLine">Klaar om te trekken</div>
+        <div class="progress-line" id="statusLine">Hou je vast, we gaan beginnen!</div>
         <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
         <div class="trail" id="trail"></div>
         <div class="action-row">
@@ -380,7 +379,7 @@
     tilePlaceholder.style.display = 'block';
     tileEmoji.style.display = 'none';
     tileEmoji.textContent = ''; tileLabel.textContent = '';
-    statusLine.textContent = 'Klaar om te trekken';
+    statusLine.textContent = 'Hou je vast, we gaan beginnen!';
     progressFill.style.width = '0%';
     trail.innerHTML = '';
   }
@@ -410,7 +409,7 @@
     tilePlaceholder.style.display = 'block';
     tileEmoji.style.display = 'none';
     tileEmoji.textContent = ''; tileLabel.textContent = '';
-    statusLine.textContent = 'Klaar om te trekken';
+    statusLine.textContent = 'Hou je vast, we gaan beginnen!';
     progressFill.style.width = '0%';
     trail.innerHTML = '';
     settingsScreen.style.display = 'none';
