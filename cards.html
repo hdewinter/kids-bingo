@@ -141,26 +141,19 @@
     if(!count || count < 1 || count > 200){ genError.textContent = 'Kies een geldig aantal kaarten (1 t/m 200).'; return; }
     genError.textContent = '';
     const cards = generateCardsForVariant(selectedThemeId, selectedVariantId, count);
-    const variant = KIDS_VARIANTS[selectedVariantId];
-    const pages = paginateCards(cards, variant.cardsPerPage);
 
     cardsArea.innerHTML = '';
-    let cardIndex = 0;
-    pages.forEach(pageCards => {
-      const pageEl = document.createElement('div');
-      pageEl.className = 'print-page';
-      pageEl.style.gridTemplateColumns = 'repeat(' + variant.printCols + ', 1fr)';
-      pageCards.forEach(card => {
-        const slot = document.createElement('div');
-        slot.className = 'card-slot';
-        slot.appendChild(buildCardDOM(card, cardIndex));
-        pageEl.appendChild(slot);
-        cardIndex++;
-      });
-      cardsArea.appendChild(pageEl);
+    const list = document.createElement('div');
+    list.className = 'cards-list';
+    cards.forEach((card, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'card-slot';
+      slot.appendChild(buildCardDOM(card, i));
+      list.appendChild(slot);
     });
+    cardsArea.appendChild(list);
     actionsRow.style.display = 'flex';
-    countLabel.textContent = cards.length + ' kaart' + (cards.length === 1 ? '' : 'en') + ' gegenereerd, ' + pages.length + ' pagina' + (pages.length === 1 ? '' : "'s");
+    countLabel.textContent = cards.length + ' kaart' + (cards.length === 1 ? '' : 'en') + ' gegenereerd';
   };
 
   document.getElementById('printBtn').onclick = () => window.print();
