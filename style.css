@@ -296,6 +296,18 @@ input[type=number]{ text-align:center; }
   body{ background:#fff; }
   .no-print{ display:none !important; }
   .wrap{ max-width:none; padding:0; }
+  @page{ size: A4 portrait; margin: 10mm; }
+}
+.print-page{
+  display:grid; gap:14px;
+  page-break-after: always; break-after: page;
+}
+.print-page:last-child{ page-break-after: auto; break-after: auto; }
+.print-page .bingo-card{
+  page-break-inside: avoid; break-inside: avoid;
+}
+@media screen{
+  .print-page{ margin-bottom:28px; }
 }
 
 /* ---------- Compacte weergave: alleen als de trekker actief is ---------- */
