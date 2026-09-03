@@ -183,13 +183,13 @@ const KIDS_VARIANTS = {
   kids4: {
     id: 'kids4', label: 'Middel (4x4)', rows: 4, cols: 4,
     hasFreeSpace: false, freeSpace: null,
-    cardsPerPage: 4,
+    cardsPerPage: 6,
     description: 'Kaart met 16 plaatjes, geen vrij vakje.'
   },
   kids5: {
     id: 'kids5', label: 'Groot (5x5)', rows: 5, cols: 5,
     hasFreeSpace: true, freeSpace: {r:2,c:2},
-    cardsPerPage: 4,
+    cardsPerPage: 6,
     description: 'Grote kaart met 24 plaatjes en een gratis vakje in het midden.'
   }
 };
