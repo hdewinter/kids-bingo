@@ -147,17 +147,16 @@
     cardsArea.innerHTML = '';
     let cardIndex = 0;
     pages.forEach(pageCards => {
-      const pageEl = document.createElement('div');
-      pageEl.className = 'print-page';
-      pageEl.style.gridTemplateColumns = 'repeat(' + variant.printCols + ', 1fr)';
+      const list = document.createElement('div');
+      list.className = 'cards-list';
       pageCards.forEach(card => {
         const slot = document.createElement('div');
         slot.className = 'card-slot';
         slot.appendChild(buildCardDOM(card, cardIndex));
-        pageEl.appendChild(slot);
+        list.appendChild(slot);
         cardIndex++;
       });
-      cardsArea.appendChild(pageEl);
+      cardsArea.appendChild(list);
     });
     actionsRow.style.display = 'flex';
     countLabel.textContent = cards.length + ' kaart' + (cards.length === 1 ? '' : 'en') + ' gegenereerd, ' + pages.length + ' pagina' + (pages.length === 1 ? '' : "'s");
