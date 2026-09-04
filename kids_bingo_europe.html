@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kids Bingo</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FFC93C">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kids Bingo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="bingo-kids-common.js"></script>
+<script src="i18n.js"></script>
+</head>
+<body>
+<div class="splash" id="splashScreen">
+  <div class="splash-emoji">🎉</div>
+  <div class="splash-text">Kids Bingo wordt geladen…</div>
+</div>
+<div id="rotateHint">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#3A2E52" stroke-width="1.6"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+  <div class="rh-title">Draai je toestel naar landschap</div>
+  <div class="rh-sub">De trekker heeft een breed scherm nodig (telefoon liggend, tablet of laptop/pc). De instellingen mag je gewoon rechtop gebruiken.</div>
+</div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand"><div class="logo">🎉</div><div class="name">Kids Bingo</div></div>
+    <div class="nav-links">
+      <a href="kids_bingo_europe.html" class="current" id="navStart">Starten</a>
+      <a href="cards.html" id="navCards">Kaarten maken</a>
+    </div>
+  </div>
+
+  <!-- ===== Instellingen ===== -->
+  <div id="settingsScreen">
+    <h1 class="page-title" id="settingsTitle">Kies een thema</h1>
+    <p class="page-sub" id="settingsSub">Trek plaatjes uit een thema en laat spelers meebingoën op hun eigen kaart.</p>
+    <div class="card">
+      <div class="field">
+        <label id="labelLanguage">Taal</label>
+        <div class="theme-grid" id="langGrid"></div>
+      </div>
+      <div class="field">
+        <label id="labelTheme">Thema</label>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+      <div class="field">
+        <label id="labelSpeed">Snelheid bij automatisch trekken</label>
+        <div class="speed-row">
+          <span class="speed-icon" title="Langzaam">🐢</span>
+          <input type="range" id="intInput" value="6" min="2" max="15" step="1">
+          <span class="speed-icon" title="Snel">🐇</span>
+          <span class="speed-value" id="speedValue">6 sec</span>
+        </div>
+      </div>
+      <div class="field">
+        <label id="labelSound">Geluid</label>
+        <div class="variant-row" id="soundRow"></div>
+      </div>
+      <div class="gen-error" id="settingsError" style="color:#c8203a; font-weight:700; min-height:18px;"></div>
+      <button class="btn coral" id="startBtn" style="width:100%;">Begin met BINGO</button>
+    </div>
+  </div>
+
+  <!-- ===== Spelscherm ===== -->
+  <div id="gameScreen">
+    <div class="topbar">
+      <h1 class="page-title" id="gameThemeTitle" style="margin:0;"></h1>
+      <div class="action-row">
+        <button class="btn ghost small" id="backBtn">← Instellingen</button>
+      </div>
+    </div>
+    <div class="game-body">
+      <div class="left-panel">
+        <div class="tile-frame" id="tileFrame">
+          <div class="tile-placeholder" id="tilePlaceholder">Klaar voor de BINGO!</div>
+          <div class="tile-emoji" id="tileEmoji" style="display:none;"></div>
+          <div class="tile-label" id="tileLabel"></div>
+        </div>
+        <div class="countdown-bar" id="countdownBar"><div id="countdownBarFill"></div></div>
+        <div class="progress-line" id="statusLine">Hou je vast, we gaan beginnen!</div>
+        <div class="progress-bar"><div id="progressFill" style="width:0%;"></div></div>
+        <div class="trail" id="trail"></div>
+        <div class="action-row">
+          <button class="btn coral" id="drawBtn">Trek een plaatje</button>
+          <button class="btn sky" id="autoBtn">Auto starten</button>
+          <button class="btn ghost" id="resetBtn">Opnieuw beginnen</button>
+        </div>
+      </div>
+      <div class="right-panel">
+        <div class="right-header">
+          <h2 id="overviewTitle">Overzicht</h2>
+          <div class="count" id="overviewCount">0 / 0</div>
+        </div>
+        <div class="overview-progress"><div id="overviewProgressFill" style="width:0%;"></div></div>
+        <div class="grid-wrap"><div id="itemGrid"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Reset bevestiging ===== -->
+  <div class="overlay" id="resetOverlay">
+    <div class="modal">
+      <h2 id="resetTitle">Opnieuw beginnen?</h2>
+      <p id="resetText">Alle getrokken plaatjes worden gewist.</p>
+      <div class="action-row">
+        <button class="btn coral" id="confirmYes">Ja, opnieuw</button>
+        <button class="btn ghost" id="confirmNo">Annuleren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const langGrid = document.getElementById('langGrid');
+  const themeGrid = document.getElementById('themeGrid');
+  const soundRow = document.getElementById('soundRow');
+  const intInput = document.getElementById('intInput');
+  const startBtn = document.getElementById('startBtn');
+  const settingsError = document.getElementById('settingsError');
+  const settingsScreen = document.getElementById('settingsScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const gameThemeTitle = document.getElementById('gameThemeTitle');
+  const tileFrame = document.getElementById('tileFrame');
+  const tilePlaceholder = document.getElementById('tilePlaceholder');
+  const tileEmoji = document.getElementById('tileEmoji');
+  const tileLabel = document.getElementById('tileLabel');
+  const statusLine = document.getElementById('statusLine');
+  const progressFill = document.getElementById('progressFill');
+  const trail = document.getElementById('trail');
+  const itemGrid = document.getElementById('itemGrid');
+  const overviewCount = document.getElementById('overviewCount');
+  const overviewProgressFill = document.getElementById('overviewProgressFill');
+  const drawBtn = document.getElementById('drawBtn');
+  const autoBtn = document.getElementById('autoBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const backBtn = document.getElementById('backBtn');
+  const resetOverlay = document.getElementById('resetOverlay');
+  const confirmYes = document.getElementById('confirmYes');
+  const confirmNo = document.getElementById('confirmNo');
+
+  let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
+  if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
+  let soundMode = localStorage.getItem('kidsbingo-sound') || 'speech';
+  let intervalSec = 6;
+  let currentThemeId = null;
+  let pool = [], poolIndex = 0, called = new Set();
+  let autoTimer = null;
+  let speechReady = false;
+
+  /* ===== Taal ===== */
+  function buildLangGrid(){
+    langGrid.innerHTML = '';
+    const current = getLang();
+    SUPPORTED_LANGUAGES.forEach(l => {
+      const tile = document.createElement('div');
+      tile.className = 'theme-tile' + (l.code === current ? ' active' : '');
+      tile.innerHTML = '<div class="t-icon">'+l.flag+'</div><div class="t-label">'+l.name+'</div>';
+      tile.onclick = () => { setLang(l.code); applyStaticText(); buildLangGrid(); buildThemeGrid(); buildSoundRow(); };
+      langGrid.appendChild(tile);
+    });
+  }
+
+  function applyStaticText(){
+    document.documentElement.lang = getLang();
+    document.getElementById('navStart').textContent = t('nav_start');
+    document.getElementById('navCards').textContent = t('nav_cards');
+    document.getElementById('settingsTitle').textContent = t('settings_title');
+    document.getElementById('settingsSub').textContent = t('settings_sub');
+    document.getElementById('labelLanguage').textContent = t('label_language');
+    document.getElementById('labelTheme').textContent = t('label_theme');
+    document.getElementById('labelSpeed').textContent = t('label_speed');
+    document.getElementById('labelSound').textContent = t('label_sound');
+    startBtn.textContent = t('btn_start');
+    backBtn.textContent = t('btn_back_settings');
+    tilePlaceholder.textContent = t('tile_placeholder');
+    drawBtn.textContent = t('btn_draw');
+    autoBtn.textContent = autoTimer ? t('btn_auto_pause') : t('btn_auto_start');
+    resetBtn.textContent = t('btn_reset');
+    document.getElementById('overviewTitle').textContent = t('overview_title');
+    document.getElementById('resetTitle').textContent = t('reset_title');
+    document.getElementById('resetText').textContent = t('reset_text');
+    confirmYes.textContent = t('btn_yes_again');
+    confirmNo.textContent = t('btn_cancel');
+    if(!currentThemeId){
+      statusLine.textContent = t('status_starting');
+    }
+  }
+
+  function buildThemeGrid(){
+    themeGrid.innerHTML = '';
+    Object.values(KIDS_THEMES).forEach(th => {
+      const tile = document.createElement('div');
+      tile.className = 'theme-tile' + (th.id === selectedThemeId ? ' active' : '');
+      tile.innerHTML = '<div class="t-icon">'+th.icon+'</div><div class="t-label">'+themeLabel(th)+'</div>';
+      tile.onclick = () => {
+        selectedThemeId = th.id;
+        localStorage.setItem('kidsbingo-theme', th.id);
+        buildThemeGrid();
+      };
+      themeGrid.appendChild(tile);
+    });
+  }
+  function buildSoundRow(){
+    soundRow.innerHTML = '';
+    const opts = [
+      {id:'speech', title:t('sound_speech_title'), sub:t('sound_speech_sub')},
+      {id:'beep', title:t('sound_beep_title'), sub:t('sound_beep_sub')},
+      {id:'off', title:t('sound_off_title'), sub:t('sound_off_sub')}
+    ];
+    opts.forEach(o => {
+      const btn = document.createElement('div');
+      btn.className = 'variant-btn' + (soundMode === o.id ? ' active' : '');
+      btn.innerHTML = '<div class="v-title">'+o.title+'</div><div class="v-sub">'+o.sub+'</div>';
+      btn.onclick = () => { soundMode = o.id; localStorage.setItem('kidsbingo-sound', o.id); buildSoundRow(); };
+      soundRow.appendChild(btn);
+    });
+  }
+  applyStaticText();
+  buildLangGrid();
+  buildThemeGrid();
+  buildSoundRow();
+
+  const speedValue = document.getElementById('speedValue');
+  function updateSpeedDisplay(){
+    speedValue.textContent = parseInt(intInput.value,10) + ' sec';
+  }
+  intInput.addEventListener('input', updateSpeedDisplay);
+  updateSpeedDisplay();
+
+  /* ===== Splash / laadscherm ===== */
+  const splashScreen = document.getElementById('splashScreen');
+  function hideSplash(){
+    splashScreen.classList.add('hidden');
+    setTimeout(() => { splashScreen.style.display = 'none'; }, 400);
+  }
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const pageReady = new Promise(resolve => {
+    if(document.readyState === 'complete') resolve();
+    else window.addEventListener('load', resolve, { once:true });
+  });
+  Promise.all([fontsReady, pageReady]).then(hideSplash).catch(hideSplash);
+  setTimeout(hideSplash, 2500);
+
+  let audioCtx = null;
+  function playAnnounce(item){
+    if(soundMode === 'off') return;
+    if(soundMode === 'speech' && 'speechSynthesis' in window){
+      try{
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(itemLabel(item));
+        u.lang = langMeta(getLang()).speechLang; u.rate = 0.95;
+        speechSynthesis.speak(u);
+      }catch(e){}
+      return;
+    }
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = 660; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+    }catch(e){}
+  }
+
+  function buildPool(themeId){
+    const theme = KIDS_THEMES[themeId];
+    pool = shuffleWith(theme.items.map(it => it.id), mulberry32(randomSeed()));
+    poolIndex = 0; called = new Set();
+    buildItemGrid(theme);
+  }
+
+  function buildItemGrid(theme){
+    itemGrid.innerHTML = '';
+    theme.items.forEach(item => {
+      const cell = document.createElement('div');
+      cell.className = 'icell';
+      cell.id = 'icell-' + item.id;
+      cell.textContent = item.emoji;
+      cell.title = itemLabel(item);
+      itemGrid.appendChild(cell);
+    });
+    overviewCount.textContent = called.size + ' / ' + theme.items.length;
+    overviewProgressFill.style.width = (theme.items.length ? Math.round((called.size/theme.items.length)*100) : 0) + '%';
+    layoutItemGrid();
+  }
+
+  function layoutItemGrid(){
+    const wrap = itemGrid.parentElement;
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight;
+    if(width < 10 || height < 10) return;
+
+    const count = itemGrid.children.length;
+    if(count === 0) return;
+    const gap = Math.max(3, Math.min(9, Math.round(Math.min(width, height) / 60)));
+
+    let best = { cols: 1, rows: count, size: 0 };
+    for(let cols = 1; cols <= count; cols++){
+      const rows = Math.ceil(count / cols);
+      const cellW = (width - gap * (cols - 1)) / cols;
+      const cellH = (height - gap * (rows - 1)) / rows;
+      const size = Math.min(cellW, cellH);
+      if(size > best.size){ best = { cols, rows, size }; }
+    }
+    const s = Math.max(20, Math.floor(best.size));
+    itemGrid.style.gap = gap + 'px';
+    itemGrid.style.gridTemplateColumns = `repeat(${best.cols}, ${s}px)`;
+    itemGrid.style.gridTemplateRows = `repeat(${best.rows}, ${s}px)`;
+    itemGrid.style.fontSize = Math.max(12, s * 0.5) + 'px';
+  }
+
+  let layoutRAF = null;
+  function scheduleItemGridLayout(){
+    if(layoutRAF) cancelAnimationFrame(layoutRAF);
+    layoutRAF = requestAnimationFrame(layoutItemGrid);
+  }
+  window.addEventListener('resize', scheduleItemGridLayout);
+  window.addEventListener('orientationchange', scheduleItemGridLayout);
+
+  function updateTrail(){
+    trail.innerHTML = '';
+    const theme = KIDS_THEMES[currentThemeId];
+    Array.from(called).forEach(id => {
+      const item = theme.itemById[id];
+      const c = document.createElement('div');
+      c.className = 'chip';
+      c.textContent = item.emoji;
+      c.title = itemLabel(item);
+      trail.appendChild(c);
+    });
+  }
+
+  const countdownBar = document.getElementById('countdownBar');
+  const countdownBarFill = document.getElementById('countdownBarFill');
+  let cdRAF = null, cdStartTs = 0;
+
+  function lerpColor(p){
+    const from = [76,175,125];
+    const to = [225,74,59];
+    const r = Math.round(from[0] + (to[0]-from[0]) * p);
+    const g = Math.round(from[1] + (to[1]-from[1]) * p);
+    const b = Math.round(from[2] + (to[2]-from[2]) * p);
+    return `rgb(${r},${g},${b})`;
+  }
+  function setRingIdle(){
+    if(cdRAF){ cancelAnimationFrame(cdRAF); cdRAF = null; }
+    countdownBar.classList.remove('active');
+  }
+  function cdTick(now){
+    if(!autoTimer){ setRingIdle(); return; }
+    const elapsed = now - cdStartTs;
+    const progress = Math.min(elapsed / (intervalSec*1000), 1);
+    countdownBarFill.style.width = ((1 - progress) * 100).toFixed(1) + '%';
+    countdownBarFill.style.background = lerpColor(progress);
+    if(progress < 1){ cdRAF = requestAnimationFrame(cdTick); }
+  }
+  function startCountdownCycle(){
+    if(cdRAF) cancelAnimationFrame(cdRAF);
+    countdownBar.classList.add('active');
+    countdownBarFill.style.width = '100%';
+    countdownBarFill.style.background = lerpColor(0);
+    cdStartTs = performance.now();
+    cdRAF = requestAnimationFrame(cdTick);
+  }
+
+  function drawItem(){
+    const theme = KIDS_THEMES[currentThemeId];
+    if(poolIndex >= pool.length){
+      statusLine.textContent = t('status_all_drawn');
+      stopAuto();
+      return;
+    }
+    const id = pool[poolIndex]; poolIndex++;
+    called.add(id);
+    const item = theme.itemById[id];
+
+    tilePlaceholder.style.display = 'none';
+    tileEmoji.style.display = 'block';
+    tileEmoji.textContent = item.emoji;
+    tileLabel.textContent = itemLabel(item);
+    tileFrame.classList.remove('pop'); void tileFrame.offsetWidth; tileFrame.classList.add('pop');
+
+    document.querySelectorAll('.icell.current').forEach(c => c.classList.remove('current'));
+    const cell = document.getElementById('icell-' + id);
+    if(cell){ cell.classList.remove('current'); void cell.offsetWidth; cell.classList.add('called'); cell.classList.add('current'); }
+
+    playAnnounce(item);
+    updateTrail();
+    const pct = Math.round((called.size/theme.items.length)*100);
+    progressFill.style.width = pct + '%';
+    statusLine.textContent = t('status_drawn_of', {n: called.size, total: theme.items.length});
+    overviewCount.textContent = called.size + ' / ' + theme.items.length;
+    overviewProgressFill.style.width = pct + '%';
+
+    if(called.size >= theme.items.length){
+      statusLine.textContent = t('status_all_drawn');
+      stopAuto();
+    } else if(autoTimer){
+      startCountdownCycle();
+    }
+  }
+
+  function startAuto(){
+    if(autoTimer) return;
+    autoBtn.textContent = t('btn_auto_pause');
+    autoTimer = setInterval(drawItem, intervalSec*1000);
+    startCountdownCycle();
+  }
+  function stopAuto(){
+    if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+    autoBtn.textContent = t('btn_auto_start');
+    setRingIdle();
+  }
+
+  drawBtn.onclick = () => { if(autoTimer) stopAuto(); drawItem(); };
+  autoBtn.onclick = () => { autoTimer ? stopAuto() : startAuto(); };
+
+  function performReset(){
+    stopAuto();
+    setRingIdle();
+    buildPool(currentThemeId);
+    tilePlaceholder.style.display = 'block';
+    tileEmoji.style.display = 'none';
+    tileEmoji.textContent = ''; tileLabel.textContent = '';
+    statusLine.textContent = t('status_starting');
+    progressFill.style.width = '0%';
+    trail.innerHTML = '';
+  }
+  resetBtn.onclick = () => { resetOverlay.classList.add('active'); };
+  confirmYes.onclick = () => { resetOverlay.classList.remove('active'); performReset(); };
+  confirmNo.onclick = () => { resetOverlay.classList.remove('active'); };
+  resetOverlay.addEventListener('click', e => { if(e.target === resetOverlay) resetOverlay.classList.remove('active'); });
+
+
+  backBtn.onclick = () => {
+    stopAuto();
+    setRingIdle();
+    document.body.classList.remove('game-active');
+    gameScreen.classList.remove('active');
+    settingsScreen.style.display = 'block';
+    buildThemeGrid(); buildSoundRow();
+  };
+
+  startBtn.onclick = () => {
+    const iv = parseInt(intInput.value,10);
+    if(!iv || iv < 2 || iv > 15){ settingsError.textContent = 'Kies een geldig interval (2 t/m 15 seconden).'; return; }
+    settingsError.textContent = '';
+    intervalSec = iv;
+    currentThemeId = selectedThemeId;
+    gameThemeTitle.textContent = KIDS_THEMES[currentThemeId].icon + ' ' + themeLabel(KIDS_THEMES[currentThemeId]);
+    buildPool(currentThemeId);
+    tilePlaceholder.style.display = 'block';
+    tileEmoji.style.display = 'none';
+    tileEmoji.textContent = ''; tileLabel.textContent = '';
+    statusLine.textContent = t('status_starting');
+    progressFill.style.width = '0%';
+    trail.innerHTML = '';
+    settingsScreen.style.display = 'none';
+    gameScreen.classList.add('active');
+    document.body.classList.add('game-active');
+    scheduleItemGridLayout();
+    if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
+      try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
+    }
+  };
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
