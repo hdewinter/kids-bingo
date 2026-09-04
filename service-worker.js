@@ -1,12 +1,14 @@
 // Kids Bingo — simpele offline-cache voor de "app-shell".
 // Bij een nieuwe versie: verhoog CACHE_NAME zodat oude caches worden opgeruimd.
-const CACHE_NAME = 'kids-bingo-v1';
+const CACHE_NAME = 'kids-bingo-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './cards.html',
+  './kids_bingo_europe.html',
   './style.css',
   './bingo-kids-common.js',
+  './i18n.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
