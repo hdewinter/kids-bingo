@@ -1,7 +1,7 @@
 {
   "name": "Kids Bingo",
   "short_name": "Kids Bingo",
-  "description": "Digitale kinderbingo met plaatjes in plaats van getallen.",
+  "description": "Bingo met leuke plaatjes-thema's — trekken, printen en spelen!",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
