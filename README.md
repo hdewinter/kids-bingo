@@ -50,3 +50,11 @@ per item i.p.v. een emoji-teken) — vraag dat gerust apart aan.
 Volledig statisch (geen backend/database), net als Bingo 2.0:
 - Seeded RNG (`mulberry32`) zodat kaartgeneratie reproduceerbaar en uniek per kaart is.
 - Geen QR-codes, scanner of digitale check — controle gebeurt met de hand.
+- PWA (`manifest.json` + `service-worker.js`): installeerbaar als app-icoon, werkt ook offline nadat de site één keer geopend is.
+
+## Als app op Android installeren
+**Optie 1 — direct installeren (geen .apk nodig):**
+Open https://hdewinter.github.io/kids-bingo/ in Chrome op Android → menu (⋮) → "App installeren" / "Toevoegen aan startscherm". De app krijgt een eigen icoon, opent zonder browserbalk en werkt offline.
+
+**Optie 2 — een echt .apk-bestand:**
+Ga naar [pwabuilder.com](https://www.pwabuilder.com), plak de URL hierboven in, en klik op "Package for stores" → Android. Dat genereert een installeerbaar/sideload-baar .apk (of .aab voor de Play Store) op basis van de PWA-instellingen hierboven. Nodig om het icoon/de kleuren/naam aan te passen? Dat staat allemaal in `manifest.json`.
