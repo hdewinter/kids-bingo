@@ -115,6 +115,19 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== Thema-wissel waarschuwing ===== -->
+  <div class="overlay" id="themeSwitchOverlay">
+    <div class="modal">
+      <h2 id="themeSwitchTitle">Thema wisselen?</h2>
+      <p id="themeSwitchText">Er loopt nog een bingospel. Als je van thema wisselt, wordt dit spel gereset.</p>
+      <div class="action-row" style="flex-direction:column;">
+        <button class="btn coral" id="themeSwitchConfirm" style="width:100%;">Ja, start opnieuw met dit thema</button>
+        <button class="btn ghost" id="themeSwitchCancel" style="width:100%;">Nee, terug naar instellingen</button>
+        <button class="btn sky" id="themeSwitchResume" style="width:100%;">Ga verder met huidige bingo</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -145,6 +158,10 @@
   const resetOverlay = document.getElementById('resetOverlay');
   const confirmYes = document.getElementById('confirmYes');
   const confirmNo = document.getElementById('confirmNo');
+  const themeSwitchOverlay = document.getElementById('themeSwitchOverlay');
+  const themeSwitchConfirm = document.getElementById('themeSwitchConfirm');
+  const themeSwitchCancel = document.getElementById('themeSwitchCancel');
+  const themeSwitchResume = document.getElementById('themeSwitchResume');
 
   let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
   if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
@@ -178,7 +195,7 @@
     document.getElementById('labelTheme').textContent = t('label_theme');
     document.getElementById('labelSpeed').textContent = t('label_speed');
     document.getElementById('labelSound').textContent = t('label_sound');
-    startBtn.textContent = t('btn_start');
+    startBtn.textContent = updateStartBtnLabel();
     backBtn.textContent = t('btn_back_settings');
     tilePlaceholder.textContent = t('tile_placeholder');
     drawBtn.textContent = t('btn_draw');
@@ -189,9 +206,34 @@
     document.getElementById('resetText').textContent = t('reset_text');
     confirmYes.textContent = t('btn_yes_again');
     confirmNo.textContent = t('btn_cancel');
+    document.getElementById('themeSwitchTitle').textContent = t('theme_switch_title');
+    document.getElementById('themeSwitchText').textContent = t('theme_switch_text');
+    themeSwitchConfirm.textContent = t('btn_theme_switch_confirm');
+    themeSwitchCancel.textContent = t('btn_theme_switch_cancel');
+    themeSwitchResume.textContent = t('btn_theme_switch_resume');
     if(!currentThemeId){
       statusLine.textContent = t('status_starting');
     }
+  }
+
+  function updateStartBtnLabel(){
+    let label;
+    if(currentThemeId === null){
+      label = t('btn_start');
+    } else if(selectedThemeId === currentThemeId){
+      label = t('btn_continue');
+    } else {
+      label = t('btn_start_over');
+    }
+    startBtn.textContent = label;
+    return label;
+  }
+
+  function chooseTheme(id){
+    selectedThemeId = id;
+    localStorage.setItem('kidsbingo-theme', id);
+    buildThemeGrid();
+    updateStartBtnLabel();
   }
 
   function buildThemeGrid(){
@@ -201,9 +243,25 @@
       tile.className = 'theme-tile' + (th.id === selectedThemeId ? ' active' : '');
       tile.innerHTML = '<div class="t-icon">'+th.icon+'</div><div class="t-label">'+themeLabel(th)+'</div>';
       tile.onclick = () => {
-        selectedThemeId = th.id;
-        localStorage.setItem('kidsbingo-theme', th.id);
-        buildThemeGrid();
+        if(currentThemeId !== null && th.id !== currentThemeId){
+          themeSwitchOverlay.classList.add('active');
+          themeSwitchConfirm.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+            chooseTheme(th.id);
+          };
+          themeSwitchCancel.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+          };
+          themeSwitchResume.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+            settingsScreen.style.display = 'none';
+            gameScreen.classList.add('active');
+            document.body.classList.add('game-active');
+            scheduleItemGridLayout();
+          };
+          return;
+        }
+        chooseTheme(th.id);
       };
       themeGrid.appendChild(tile);
     });
@@ -450,6 +508,7 @@
     gameScreen.classList.remove('active');
     settingsScreen.style.display = 'block';
     buildThemeGrid(); buildSoundRow();
+    updateStartBtnLabel();
   };
 
   startBtn.onclick = () => {
@@ -473,6 +532,7 @@
     gameScreen.classList.add('active');
     document.body.classList.add('game-active');
     scheduleItemGridLayout();
+    updateStartBtnLabel();
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
       try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
     }

@@ -63,6 +63,19 @@
     </div>
   </div>
 
+  <!-- ===== Thema-wissel waarschuwing ===== -->
+  <div class="overlay" id="themeSwitchOverlay">
+    <div class="modal">
+      <h2>Thema wisselen?</h2>
+      <p>Er loopt nog een bingospel. Als je van thema wisselt, wordt dit spel gereset.</p>
+      <div class="action-row" style="flex-direction:column;">
+        <button class="btn coral" id="themeSwitchConfirm" style="width:100%;">Ja, start opnieuw met dit thema</button>
+        <button class="btn ghost" id="themeSwitchCancel" style="width:100%;">Nee, terug naar instellingen</button>
+        <button class="btn sky" id="themeSwitchResume" style="width:100%;">Ga verder met huidige bingo</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== Spelscherm ===== -->
   <div id="gameScreen">
     <div class="topbar">
@@ -140,6 +153,10 @@
   const resetOverlay = document.getElementById('resetOverlay');
   const confirmYes = document.getElementById('confirmYes');
   const confirmNo = document.getElementById('confirmNo');
+  const themeSwitchOverlay = document.getElementById('themeSwitchOverlay');
+  const themeSwitchConfirm = document.getElementById('themeSwitchConfirm');
+  const themeSwitchCancel = document.getElementById('themeSwitchCancel');
+  const themeSwitchResume = document.getElementById('themeSwitchResume');
 
   let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
   if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
@@ -150,6 +167,23 @@
   let autoTimer = null;
   let speechReady = false;
 
+  function updateStartBtnLabel(){
+    if(currentThemeId === null){
+      startBtn.textContent = 'Begin met BINGO';
+    } else if(selectedThemeId === currentThemeId){
+      startBtn.textContent = 'Ga verder';
+    } else {
+      startBtn.textContent = 'Start opnieuw';
+    }
+  }
+
+  function chooseTheme(id){
+    selectedThemeId = id;
+    localStorage.setItem('kidsbingo-theme', id);
+    buildThemeGrid();
+    updateStartBtnLabel();
+  }
+
   function buildThemeGrid(){
     themeGrid.innerHTML = '';
     Object.values(KIDS_THEMES).forEach(t => {
@@ -157,9 +191,25 @@
       tile.className = 'theme-tile' + (t.id === selectedThemeId ? ' active' : '');
       tile.innerHTML = '<div class="t-icon">'+t.icon+'</div><div class="t-label">'+t.label+'</div>';
       tile.onclick = () => {
-        selectedThemeId = t.id;
-        localStorage.setItem('kidsbingo-theme', t.id);
-        buildThemeGrid();
+        if(currentThemeId !== null && t.id !== currentThemeId){
+          themeSwitchOverlay.classList.add('active');
+          themeSwitchConfirm.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+            chooseTheme(t.id);
+          };
+          themeSwitchCancel.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+          };
+          themeSwitchResume.onclick = () => {
+            themeSwitchOverlay.classList.remove('active');
+            settingsScreen.style.display = 'none';
+            gameScreen.classList.add('active');
+            document.body.classList.add('game-active');
+            scheduleItemGridLayout();
+          };
+          return;
+        }
+        chooseTheme(t.id);
       };
       themeGrid.appendChild(tile);
     });
@@ -404,6 +454,7 @@
     gameScreen.classList.remove('active');
     settingsScreen.style.display = 'block';
     buildThemeGrid(); buildSoundRow();
+    updateStartBtnLabel();
   };
 
   startBtn.onclick = () => {
@@ -427,6 +478,7 @@
     gameScreen.classList.add('active');
     document.body.classList.add('game-active');
     scheduleItemGridLayout();
+    updateStartBtnLabel();
     if(soundMode === 'speech' && 'speechSynthesis' in window && !speechReady){
       try{ const unlock = new SpeechSynthesisUtterance(' '); unlock.volume = 0; speechSynthesis.speak(unlock); speechReady = true; }catch(e){}
     }
