@@ -411,15 +411,18 @@
     if(!iv || iv < 2 || iv > 15){ settingsError.textContent = 'Kies een geldig interval (2 t/m 15 seconden).'; return; }
     settingsError.textContent = '';
     intervalSec = iv;
+    const resuming = currentThemeId !== null && currentThemeId === selectedThemeId;
     currentThemeId = selectedThemeId;
     gameThemeTitle.textContent = KIDS_THEMES[currentThemeId].icon + ' ' + KIDS_THEMES[currentThemeId].label;
-    buildPool(currentThemeId);
-    tilePlaceholder.style.display = 'block';
-    tileEmoji.style.display = 'none';
-    tileEmoji.textContent = ''; tileLabel.textContent = '';
-    statusLine.textContent = 'Hou je vast, we gaan beginnen!';
-    progressFill.style.width = '0%';
-    trail.innerHTML = '';
+    if(!resuming){
+      buildPool(currentThemeId);
+      tilePlaceholder.style.display = 'block';
+      tileEmoji.style.display = 'none';
+      tileEmoji.textContent = ''; tileLabel.textContent = '';
+      statusLine.textContent = 'Hou je vast, we gaan beginnen!';
+      progressFill.style.width = '0%';
+      trail.innerHTML = '';
+    }
     settingsScreen.style.display = 'none';
     gameScreen.classList.add('active');
     document.body.classList.add('game-active');
