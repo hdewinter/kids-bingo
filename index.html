@@ -332,6 +332,16 @@
   window.addEventListener('resize', scheduleItemGridLayout);
   window.addEventListener('orientationchange', scheduleItemGridLayout);
 
+  /* Betrouwbare stand-detectie los van de CSS orientation-media-query
+     (die bij sommige geïnstalleerde PWA's na een draai blijft hangen). */
+  function updateOrientationClass(){
+    const isPortrait = window.innerWidth < window.innerHeight && window.innerWidth <= 900;
+    document.body.classList.toggle('is-portrait', isPortrait);
+  }
+  updateOrientationClass();
+  window.addEventListener('resize', updateOrientationClass);
+  window.addEventListener('orientationchange', () => { setTimeout(updateOrientationClass, 60); });
+
   function updateTrail(){
     trail.innerHTML = '';
     const theme = KIDS_THEMES[currentThemeId];

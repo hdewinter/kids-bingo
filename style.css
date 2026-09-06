@@ -345,6 +345,11 @@ body.game-active h1.page-title{ font-size: clamp(16px, 2.6vh, 26px); margin: 0; 
 #rotateHint .rh-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--plum); }
 #rotateHint .rh-sub{ color:var(--plum-soft); font-size:14px; max-width:38ch; }
 @keyframes rotatePulse{ 0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(90deg); } }
+/* JS-gestuurde standdetectie (betrouwbaar bij geïnstalleerde PWA's waar de browser
+   de CSS-orientatie na een draai soms niet update) */
+body.game-active.is-portrait #rotateHint{ display:flex; }
+body.game-active.is-portrait #gameScreen{ display:none !important; }
+/* Native CSS-fallback voor browsers zonder JS-detectie */
 @media (orientation: portrait) and (max-width: 900px){
   body.game-active #rotateHint{ display:flex; }
   body.game-active #gameScreen{ display:none !important; }
