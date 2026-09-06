@@ -34,6 +34,18 @@
     <div class="nav-links">
       <a href="kids_bingo_europe.html" class="current" id="navStart">Starten</a>
       <a href="cards.html" id="navCards">Kaarten maken</a>
+      <button id="langFlagBtn" title="Taal" style="background:none; border:none; font-size:26px; line-height:1; cursor:pointer; padding:0 2px;">🇳🇱</button>
+    </div>
+  </div>
+
+  <!-- ===== Taal-popup ===== -->
+  <div class="overlay" id="langOverlay">
+    <div class="modal">
+      <h2 id="langOverlayTitle">Taal</h2>
+      <div class="theme-grid" id="langGrid"></div>
+      <div class="action-row" style="margin-top:14px;">
+        <button class="btn ghost" id="langOverlayClose" style="width:100%;">Sluiten</button>
+      </div>
     </div>
   </div>
 
@@ -43,9 +55,6 @@
     <p class="page-sub" id="settingsSub">Trek plaatjes uit een thema en laat spelers meebingoën op hun eigen kaart.</p>
     <div class="card">
       <div class="field">
-        <label id="labelLanguage">Taal</label>
-        <div class="theme-grid" id="langGrid"></div>
-      </div>
       <div class="field">
         <label id="labelTheme">Thema</label>
         <div class="theme-grid" id="themeGrid"></div>
@@ -162,6 +171,9 @@
   const themeSwitchConfirm = document.getElementById('themeSwitchConfirm');
   const themeSwitchCancel = document.getElementById('themeSwitchCancel');
   const themeSwitchResume = document.getElementById('themeSwitchResume');
+  const langFlagBtn = document.getElementById('langFlagBtn');
+  const langOverlay = document.getElementById('langOverlay');
+  const langOverlayClose = document.getElementById('langOverlayClose');
 
   let selectedThemeId = (localStorage.getItem('kidsbingo-theme')) || DEFAULT_THEME_ID;
   if(!KIDS_THEMES[selectedThemeId]) selectedThemeId = DEFAULT_THEME_ID;
@@ -180,18 +192,31 @@
       const tile = document.createElement('div');
       tile.className = 'theme-tile' + (l.code === current ? ' active' : '');
       tile.innerHTML = '<div class="t-icon">'+l.flag+'</div><div class="t-label">'+l.name+'</div>';
-      tile.onclick = () => { setLang(l.code); applyStaticText(); buildLangGrid(); buildThemeGrid(); buildSoundRow(); };
+      tile.onclick = () => {
+        setLang(l.code);
+        applyStaticText();
+        buildLangGrid();
+        buildThemeGrid();
+        buildSoundRow();
+        langOverlay.classList.remove('active');
+      };
       langGrid.appendChild(tile);
     });
   }
+  langFlagBtn.onclick = () => { buildLangGrid(); langOverlay.classList.add('active'); };
+  langOverlayClose.onclick = () => { langOverlay.classList.remove('active'); };
+  langOverlay.addEventListener('click', e => { if(e.target === langOverlay) langOverlay.classList.remove('active'); });
 
   function applyStaticText(){
     document.documentElement.lang = getLang();
+    langFlagBtn.textContent = langMeta(getLang()).flag;
+    langFlagBtn.title = t('label_language');
     document.getElementById('navStart').textContent = t('nav_start');
     document.getElementById('navCards').textContent = t('nav_cards');
     document.getElementById('settingsTitle').textContent = t('settings_title');
     document.getElementById('settingsSub').textContent = t('settings_sub');
-    document.getElementById('labelLanguage').textContent = t('label_language');
+    document.getElementById('langOverlayTitle').textContent = t('label_language');
+    langOverlayClose.textContent = t('btn_close');
     document.getElementById('labelTheme').textContent = t('label_theme');
     document.getElementById('labelSpeed').textContent = t('label_speed');
     document.getElementById('labelSound').textContent = t('label_sound');
